@@ -3,12 +3,18 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "packages/*": ["packages/*"],
+      "servers/*": ["servers/*"],
+      "scripts/*": ["scripts/*"]
+    },
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
     "outDir": "dist",
     "types": ["node"]
   },
-  "include": ["servers", "packages", "scripts", "types"],
+  "include": ["servers", "packages", "scripts", "types", "tests"],
   "exclude": ["node_modules", "dist"]
 }

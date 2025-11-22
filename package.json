@@ -7,6 +7,9 @@
   "scripts": {
     "dev:mcp": "tsx servers/mcp/index.ts",
     "test:ping": "tsx scripts/test-ping.ts",
+    "test:auth-app-store": "tsx scripts/test-auth-app-store.ts",
+    "test:auth-play-store": "tsx scripts/test-auth-play-store.ts",
+    "test": "tsx --test tests",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

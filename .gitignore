@@ -5,8 +5,13 @@ dist/
 # Env / secrets
 .env
 .env.*
+secrets/
+
+# Local MCP wrapper (contains secrets)
+scripts/run-mcp.sh
 
 # OS / editor
 .DS_Store
 .vscode/
 .idea/
+secrets

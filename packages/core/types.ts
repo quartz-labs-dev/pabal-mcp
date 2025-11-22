@@ -16,6 +16,9 @@ export type StoreMetadata = {
   subtitle?: LocalizedText;
   description?: LocalizedText;
   keywords?: LocalizedText;
+  supportUrl?: LocalizedText;
+  marketingUrl?: LocalizedText;
+  whatsNew?: LocalizedText;
   // 필요 시 추가 확장.
   [key: string]: unknown;
 };
