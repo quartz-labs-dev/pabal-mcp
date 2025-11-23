@@ -7,7 +7,7 @@ import {
   ensureDir,
   getAsoDir,
 } from "@packages/aso-core";
-import { loadConfig, findApp } from "@packages/core";
+import { loadConfig, findApp } from "@packages/shared";
 import { join } from "node:path";
 import { writeFileSync } from "node:fs";
 

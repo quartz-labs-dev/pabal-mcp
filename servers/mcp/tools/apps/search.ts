@@ -10,7 +10,7 @@ import {
   loadRegisteredApps,
   findApp,
   type RegisteredApp,
-} from "@packages/core";
+} from "@packages/shared";
 
 interface SearchAppsOptions {
   /** Search term (slug, bundleId, packageName, name). Returns all apps if empty */

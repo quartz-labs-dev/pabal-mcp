@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import { ConfigError } from "@packages/core/errors";
+import { ConfigError } from "@packages/shared/errors";
 
 export const DATA_DIR_ENV_KEY = "PABAL_MCP_DATA_DIR";
 

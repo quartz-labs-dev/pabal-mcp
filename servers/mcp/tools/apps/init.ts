@@ -11,7 +11,7 @@ import {
   loadRegisteredApps,
   saveRegisteredApps,
   type RegisteredApp,
-} from "@packages/core";
+} from "@packages/shared";
 
 interface SetupAppsOptions {
   store?: "appStore" | "googlePlay" | "both";

@@ -251,7 +251,8 @@ export function isAppStoreMultilingual(
 // Sync Options
 // ============================================================================
 
-export type StoreType = "googlePlay" | "appStore" | "both";
+import { type StoreType } from "@packages/shared/types";
+
 export type SyncDirection = "pull" | "push" | "sync";
 
 export interface SyncOptions {
@@ -261,3 +262,6 @@ export interface SyncOptions {
   dryRun?: boolean;
   uploadImages?: boolean;
 }
+
+// Re-export StoreType for backward compatibility
+export type { StoreType } from "@packages/shared/types";

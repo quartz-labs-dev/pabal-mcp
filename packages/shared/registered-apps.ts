@@ -5,7 +5,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { getProjectRoot } from "@packages/core/config";
+import { getProjectRoot } from "@packages/shared/config";
 
 // ============================================================================
 // Type Definitions

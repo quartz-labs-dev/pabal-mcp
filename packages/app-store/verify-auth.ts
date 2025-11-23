@@ -1,4 +1,4 @@
-import { loadConfig } from "@packages/core/config";
+import { loadConfig } from "@packages/shared/config";
 import { createAppStoreJWT, decodeJwt } from "@packages/app-store/auth";
 
 export interface VerifyAppStoreAuthResult {
@@ -25,7 +25,8 @@ export async function verifyAppStoreAuth({
     if (!cfg) {
       return {
         success: false,
-        error: "App Store configuration not found in secrets/aso-config.json file.",
+        error:
+          "App Store configuration not found in secrets/aso-config.json file.",
       };
     }
 

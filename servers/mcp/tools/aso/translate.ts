@@ -6,8 +6,7 @@
  */
 
 import { APP_STORE_SUPPORTED_LOCALES, GOOGLE_PLAY_SUPPORTED_LANGUAGES } from "@packages/aso-core";
-
-type StoreType = "googlePlay" | "appStore" | "both";
+import { type StoreType } from "@packages/shared/types";
 
 interface AsoTranslateOptions {
   text: string;

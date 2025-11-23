@@ -11,7 +11,7 @@ import {
   prepareAsoDataForPush,
   convertToMultilingual,
 } from "@packages/aso-core";
-import { loadConfig, findApp, getDataDir } from "@packages/core";
+import { loadConfig, findApp, getDataDir } from "@packages/shared";
 import { join } from "node:path";
 
 interface AsoPushOptions {

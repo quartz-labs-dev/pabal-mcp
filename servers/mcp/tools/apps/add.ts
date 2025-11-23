@@ -9,7 +9,7 @@ import {
   registerApp,
   findApp,
   type RegisteredApp,
-} from "@packages/core";
+} from "@packages/shared";
 
 interface AddAppOptions {
   /** App identifier (bundleId or packageName) */

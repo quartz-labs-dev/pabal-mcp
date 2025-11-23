@@ -3,11 +3,12 @@ export * from "./verify-auth";
 export * from "./client";
 export { AppStoreClient } from "./client";
 export type { AppStoreClientConfig } from "./client";
+export * from "./check-latest-versions";
 import { AppStoreClient } from "./client";
-import type { AppStoreConfig } from "@packages/core/config";
+import type { AppStoreConfig } from "@packages/shared/config";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { getProjectRoot } from "@packages/core/config";
+import { getProjectRoot } from "@packages/shared/config";
 
 /**
  * Helper function to create AppStoreClient

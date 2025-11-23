@@ -6,7 +6,7 @@ import {
   copyFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
-import { getDataDir } from "@packages/core/config";
+import { getDataDir } from "@packages/shared/config";
 import {
   type AsoData,
   type GooglePlayAsoData,

@@ -13,7 +13,7 @@ import {
   resolveAppStoreImageUrl,
   convertToMultilingual,
 } from "@packages/aso-core";
-import { loadConfig, getDataDir, findApp } from "@packages/core";
+import { loadConfig, getDataDir, findApp } from "@packages/shared";
 import { join } from "node:path";
 
 interface AsoPullOptions {

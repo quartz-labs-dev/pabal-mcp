@@ -4,8 +4,7 @@
 
 import { verifyAppStoreAuth } from "@packages/app-store";
 import { verifyPlayStoreAuth } from "@packages/play-store";
-
-type StoreType = "appStore" | "googlePlay" | "both";
+import { type StoreType } from "@packages/shared/types";
 
 interface AuthCheckOptions {
   store?: StoreType;

@@ -1,13 +1,13 @@
 import { GooglePlayClient } from "@packages/play-store";
 import { AppStoreClient } from "@packages/app-store";
-import { type StoreType } from "@packages/aso-core";
-import { loadConfig, findApp } from "@packages/core";
+import { type StoreType } from "@packages/shared/types";
+import { loadConfig, findApp, checkLatestVersions } from "@packages/shared";
 
 interface AsoCreateVersionOptions {
   app?: string; // Registered app slug
   packageName?: string; // For Google Play
   bundleId?: string; // For App Store
-  version: string;
+  version?: string; // Optional: if not provided, will check latest versions and prompt
   store?: StoreType;
   versionCodes?: number[]; // For Google Play
 }
@@ -61,6 +61,27 @@ export async function handleAsoCreateVersion(options: AsoCreateVersionOptions) {
     };
   }
 
+  const config = loadConfig();
+
+  // If version is not provided, check latest versions and prompt user
+  if (!version) {
+    const versionInfo = await checkLatestVersions({
+      store,
+      bundleId,
+      packageName,
+    });
+
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: versionInfo.join("\n"),
+        },
+      ],
+    };
+  }
+
+  // Version is provided, proceed with creation
   console.log(`\n📦 Creating version: ${version}`);
   console.log(`   Store: ${store}`);
   console.log(`   App: ${slug}`);
@@ -71,7 +92,6 @@ export async function handleAsoCreateVersion(options: AsoCreateVersionOptions) {
   }
   console.log();
 
-  const config = loadConfig();
   const results: string[] = [];
 
   if (store === "appStore" || store === "both") {

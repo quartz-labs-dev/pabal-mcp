@@ -4,7 +4,7 @@
  * Supports both App Store and Google Play.
  */
 
-type StoreType = "googlePlay" | "appStore" | "both";
+import { type StoreType } from "@packages/shared/types";
 
 interface UpdateNotesOptions {
   app?: string;
@@ -19,7 +19,7 @@ export async function handleUpdateNotes(options: UpdateNotesOptions) {
   const { app, versionId, whatsNew, store = "both" } = options;
   let { bundleId, packageName } = options;
 
-  const { findApp, loadConfig } = await import("@packages/core");
+  const { findApp, loadConfig } = await import("@packages/shared");
 
   // Determine slug
   let slug: string;

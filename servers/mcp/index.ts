@@ -16,6 +16,7 @@ import {
   handleAsoCreateVersion,
   handleAsoPullReleaseNotes,
   handleUpdateNotes,
+  handleCheckLatestVersions,
 } from "./tools";
 
 // Change to project root first
@@ -272,19 +273,42 @@ registerToolWithInfo(
 // ============================================================================
 
 registerToolWithInfo(
-  "release-create",
+  "release-check-versions",
   {
-    description: "Create a new version on App Store/Google Play.",
+    description: "Check latest versions from App Store/Google Play.",
     inputSchema: z.object({
       app: z.string().optional().describe("Registered app slug"),
       packageName: z.string().optional().describe("Google Play package name"),
       bundleId: z.string().optional().describe("App Store bundle ID"),
-      version: z.string().describe("Version string to create (e.g., 1.2.0)"),
+      store: storeSchema.describe("Target store (default: both)"),
+    }),
+  },
+  handleCheckLatestVersions,
+  "Release Management"
+);
+
+registerToolWithInfo(
+  "release-create",
+  {
+    description:
+      "Create a new version on App Store/Google Play. If version is not provided, checks and displays latest versions from each store.",
+    inputSchema: z.object({
+      app: z.string().optional().describe("Registered app slug"),
+      packageName: z.string().optional().describe("Google Play package name"),
+      bundleId: z.string().optional().describe("App Store bundle ID"),
+      version: z
+        .string()
+        .optional()
+        .describe(
+          "Version string to create (e.g., 1.2.0). If not provided, will check and display latest versions."
+        ),
       store: storeSchema.describe("Target store (default: both)"),
       versionCodes: z
         .array(z.number())
         .optional()
-        .describe("Version code array for Google Play"),
+        .describe(
+          "Version code array for Google Play (required when creating Google Play version)"
+        ),
     }),
   },
   handleAsoCreateVersion,
@@ -344,8 +368,9 @@ async function main() {
 
 // Only start server if this file is run directly (not imported)
 // Check if the current file is the main module being executed
-const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
-                     fileURLToPath(import.meta.url) === process.argv[1];
+const isMainModule =
+  import.meta.url === `file://${process.argv[1]}` ||
+  fileURLToPath(import.meta.url) === process.argv[1];
 
 if (isMainModule) {
   main().catch((error) => {
