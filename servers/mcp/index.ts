@@ -342,7 +342,14 @@ async function main() {
   await server.connect(transport);
 }
 
-main().catch((error) => {
-  console.error("MCP server failed to start", error);
-  process.exit(1);
-});
+// Only start server if this file is run directly (not imported)
+// Check if the current file is the main module being executed
+const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
+                     fileURLToPath(import.meta.url) === process.argv[1];
+
+if (isMainModule) {
+  main().catch((error) => {
+    console.error("MCP server failed to start", error);
+    process.exit(1);
+  });
+}
