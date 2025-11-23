@@ -40,43 +40,95 @@ const server = new McpServer(
 const storeSchema = z.enum(["appStore", "googlePlay", "both"]).optional();
 
 // ============================================================================
+// Tool Registration Info (for documentation)
+// ============================================================================
+
+interface ToolInfo {
+  name: string;
+  description: string;
+  inputSchema?: z.ZodObject<any> | z.ZodTypeAny;
+  category?: string;
+}
+
+const toolInfos: ToolInfo[] = [];
+
+function registerToolWithInfo(
+  name: string,
+  info: { description: string; inputSchema?: z.ZodObject<any> | z.ZodTypeAny },
+  handler: any,
+  category?: string
+) {
+  // Store tool info for documentation (keep zod schema)
+  toolInfos.push({
+    name,
+    description: info.description,
+    inputSchema: info.inputSchema,
+    category,
+  });
+
+  // Convert zod schema to plain object for MCP SDK
+  const mcpInfo: { description: string; inputSchema?: any } = {
+    description: info.description,
+  };
+
+  if (info.inputSchema && info.inputSchema instanceof z.ZodObject) {
+    // Convert ZodObject to plain object format expected by MCP SDK
+    const shape = info.inputSchema.shape;
+    const plainSchema: Record<string, any> = {};
+    for (const [key, value] of Object.entries(shape)) {
+      plainSchema[key] = value;
+    }
+    mcpInfo.inputSchema = plainSchema;
+  }
+
+  server.registerTool(name, mcpInfo, handler);
+}
+
+// Export tool info for documentation
+export function getToolInfos(): ToolInfo[] {
+  return toolInfos;
+}
+
+// ============================================================================
 // Health Check
 // ============================================================================
 
-server.registerTool(
+registerToolWithInfo(
   "ping",
   {
     description: "Health check for connection verification",
   },
-  handlePing
+  handlePing,
+  "Health Check"
 );
 
 // ============================================================================
 // Authentication (auth-*)
 // ============================================================================
 
-server.registerTool(
+registerToolWithInfo(
   "auth-check",
   {
     description:
       "Check authentication status for App Store Connect / Google Play Console.",
-    inputSchema: {
+    inputSchema: z.object({
       store: storeSchema.describe("Store to check (default: both)"),
-    },
+    }),
   },
-  handleAuthCheck
+  handleAuthCheck,
+  "Authentication"
 );
 
 // ============================================================================
 // App Management (apps-*)
 // ============================================================================
 
-server.registerTool(
+registerToolWithInfo(
   "apps-init",
   {
     description:
       "Query app list from store API and register automatically. App Store: auto-register all apps, Google Play: packageName required.",
-    inputSchema: {
+    inputSchema: z.object({
       store: z
         .enum(["appStore", "googlePlay"])
         .optional()
@@ -87,17 +139,18 @@ server.registerTool(
         .describe(
           "Google Play package name (required when setting up Google Play)"
         ),
-    },
+    }),
   },
-  handleSetupApps
+  handleSetupApps,
+  "App Management"
 );
 
-server.registerTool(
+registerToolWithInfo(
   "apps-add",
   {
     description:
       "Register individual app by bundleId or packageName. Automatically checks both stores.",
-    inputSchema: {
+    inputSchema: z.object({
       identifier: z
         .string()
         .describe(
@@ -110,17 +163,18 @@ server.registerTool(
           "Custom slug (if not specified, uses last part of identifier)"
         ),
       store: storeSchema.describe("Store to check (default: both)"),
-    },
+    }),
   },
-  handleAddApp
+  handleAddApp,
+  "App Management"
 );
 
-server.registerTool(
+registerToolWithInfo(
   "apps-search",
   {
     description:
       "Search registered apps. Returns all apps if called without query.",
-    inputSchema: {
+    inputSchema: z.object({
       query: z
         .string()
         .optional()
@@ -131,21 +185,22 @@ server.registerTool(
         .enum(["all", "appStore", "googlePlay"])
         .optional()
         .describe("Store filter (default: all)"),
-    },
+    }),
   },
-  handleSearchApps
+  handleSearchApps,
+  "App Management"
 );
 
 // ============================================================================
 // ASO Data Sync (aso-*)
 // ============================================================================
 
-server.registerTool(
+registerToolWithInfo(
   "aso-pull",
   {
     description:
       "Fetch ASO data from App Store/Google Play and save to local cache.",
-    inputSchema: {
+    inputSchema: z.object({
       app: z
         .string()
         .optional()
@@ -157,16 +212,17 @@ server.registerTool(
         .boolean()
         .optional()
         .describe("If true, only outputs result without actually saving"),
-    },
+    }),
   },
-  handleAsoPull
+  handleAsoPull,
+  "ASO Data Sync"
 );
 
-server.registerTool(
+registerToolWithInfo(
   "aso-push",
   {
     description: "Push ASO data from local cache to App Store/Google Play.",
-    inputSchema: {
+    inputSchema: z.object({
       app: z.string().optional().describe("Registered app slug"),
       packageName: z.string().optional().describe("Google Play package name"),
       bundleId: z.string().optional().describe("App Store bundle ID"),
@@ -179,17 +235,18 @@ server.registerTool(
         .boolean()
         .optional()
         .describe("If true, only outputs result without actually pushing"),
-    },
+    }),
   },
-  handleAsoPush
+  handleAsoPush,
+  "ASO Data Sync"
 );
 
-server.registerTool(
+registerToolWithInfo(
   "aso-translate",
   {
     description:
       "Returns text that needs translation and target locale list. LLM should perform translation directly and pass results to release-update-notes.",
-    inputSchema: {
+    inputSchema: z.object({
       text: z.string().describe("Source text to translate"),
       sourceLocale: z
         .string()
@@ -204,20 +261,21 @@ server.registerTool(
       store: storeSchema.describe(
         "Target store (used to determine locale list)"
       ),
-    },
+    }),
   },
-  handleAsoTranslate
+  handleAsoTranslate,
+  "ASO Data Sync"
 );
 
 // ============================================================================
 // Release Management (release-*)
 // ============================================================================
 
-server.registerTool(
+registerToolWithInfo(
   "release-create",
   {
     description: "Create a new version on App Store/Google Play.",
-    inputSchema: {
+    inputSchema: z.object({
       app: z.string().optional().describe("Registered app slug"),
       packageName: z.string().optional().describe("Google Play package name"),
       bundleId: z.string().optional().describe("App Store bundle ID"),
@@ -227,16 +285,17 @@ server.registerTool(
         .array(z.number())
         .optional()
         .describe("Version code array for Google Play"),
-    },
+    }),
   },
-  handleAsoCreateVersion
+  handleAsoCreateVersion,
+  "Release Management"
 );
 
-server.registerTool(
+registerToolWithInfo(
   "release-pull-notes",
   {
     description: "Fetch release notes from App Store/Google Play.",
-    inputSchema: {
+    inputSchema: z.object({
       app: z.string().optional().describe("Registered app slug"),
       packageName: z.string().optional().describe("Google Play package name"),
       bundleId: z.string().optional().describe("App Store bundle ID"),
@@ -245,17 +304,18 @@ server.registerTool(
         .boolean()
         .optional()
         .describe("If true, only outputs result without actually saving"),
-    },
+    }),
   },
-  handleAsoPullReleaseNotes
+  handleAsoPullReleaseNotes,
+  "Release Management"
 );
 
-server.registerTool(
+registerToolWithInfo(
   "release-update-notes",
   {
     description:
       "Update release notes (What's New) for App Store/Google Play version.",
-    inputSchema: {
+    inputSchema: z.object({
       app: z.string().optional().describe("Registered app slug"),
       packageName: z.string().optional().describe("Google Play package name"),
       bundleId: z.string().optional().describe("App Store bundle ID"),
@@ -271,9 +331,10 @@ server.registerTool(
         .describe(
           'Release notes by locale (e.g., { "en-US": "Bug fixes", "ko": "Bug fixes" })'
         ),
-    },
+    }),
   },
-  handleUpdateNotes
+  handleUpdateNotes,
+  "Release Management"
 );
 
 async function main() {

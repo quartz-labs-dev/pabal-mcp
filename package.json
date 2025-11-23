@@ -9,7 +9,8 @@
     "test": "tsx --test tests/**/*.test.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "list-tools": "tsx scripts/list-mcp-tools.ts"
   },
   "keywords": [
     "mcp",
