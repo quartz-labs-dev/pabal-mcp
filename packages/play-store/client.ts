@@ -489,32 +489,10 @@ export class GooglePlayClient {
         }
       }
 
-      // Update app details (contactEmail, contactPhone, contactWebsite) once
-      // Use first locale's data for contact info (it's app-level, not locale-specific)
-      const firstLocaleData = Object.values(data.locales)[0];
-      if (firstLocaleData && (firstLocaleData.contactEmail || firstLocaleData.contactPhone || firstLocaleData.contactWebsite)) {
-        const detailsBody: Record<string, string> = {};
-        if (firstLocaleData.contactEmail) detailsBody.contactEmail = firstLocaleData.contactEmail;
-        if (firstLocaleData.contactPhone) detailsBody.contactPhone = firstLocaleData.contactPhone;
-        if (firstLocaleData.contactWebsite) detailsBody.contactWebsite = firstLocaleData.contactWebsite;
-
-        console.error(`[GooglePlayClient] Updating app details...`);
-
-        try {
-          await this.androidPublisher.edits.details.update({
-            auth: authClient,
-            packageName: this.packageName,
-            editId,
-            requestBody: detailsBody,
-          });
-          console.error(`[GooglePlayClient] ✅ App details prepared`);
-        } catch (detailsError: any) {
-          console.error(`[GooglePlayClient] ❌ Details update failed`);
-          console.error(`[GooglePlayClient] Error code:`, detailsError.code);
-          console.error(`[GooglePlayClient] Error message:`, detailsError.message);
-          throw detailsError;
-        }
-      }
+      // NOTE: App details (contactEmail, contactPhone, contactWebsite) must be updated
+      // in a separate edit session using pushAppDetails() method.
+      // Google Play API returns 500 Internal Server Error when updating details
+      // in the same edit session as listings.
 
       // Commit all changes at once
       console.error(`[GooglePlayClient] Committing all changes...`);
@@ -550,6 +528,74 @@ export class GooglePlayClient {
     } catch (error: any) {
       console.error(`[GooglePlayClient] Rolling back edit due to error...`);
       console.error(`[GooglePlayClient] Full error object:`, JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+      try {
+        await this.androidPublisher.edits.delete({
+          auth: authClient,
+          packageName: this.packageName,
+          editId,
+        });
+      } catch {
+        // Ignore deletion failure
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Push app details (contactEmail, contactPhone, contactWebsite) in a separate edit session
+   * This must be called separately from pushMultilingualAsoData due to Google Play API limitations
+   */
+  async pushAppDetails(details: {
+    contactEmail?: string;
+    contactPhone?: string;
+    contactWebsite?: string;
+  }): Promise<void> {
+    if (!details.contactEmail && !details.contactPhone && !details.contactWebsite) {
+      console.error(`[GooglePlayClient] No app details to update, skipping`);
+      return;
+    }
+
+    const authClient = await this.auth.getClient();
+
+    const editResponse = await this.androidPublisher.edits.insert({
+      auth: authClient,
+      packageName: this.packageName,
+    });
+
+    const editId = editResponse.data.id!;
+
+    console.error(`[GooglePlayClient] Starting app details update...`);
+
+    try {
+      const detailsBody: Record<string, string> = {};
+      if (details.contactEmail) detailsBody.contactEmail = details.contactEmail;
+      if (details.contactPhone) detailsBody.contactPhone = details.contactPhone;
+      if (details.contactWebsite) detailsBody.contactWebsite = details.contactWebsite;
+
+      console.error(`[GooglePlayClient] Updating details:`, JSON.stringify(detailsBody, null, 2));
+
+      await this.androidPublisher.edits.details.update({
+        auth: authClient,
+        packageName: this.packageName,
+        editId,
+        requestBody: detailsBody,
+      });
+
+      console.error(`[GooglePlayClient] ✅ Details prepared`);
+
+      console.error(`[GooglePlayClient] Committing app details...`);
+      await this.androidPublisher.edits.commit({
+        auth: authClient,
+        packageName: this.packageName,
+        editId,
+      });
+      console.error(`[GooglePlayClient] ✅ App details committed successfully`);
+    } catch (error: any) {
+      console.error(`[GooglePlayClient] Rolling back edit due to error...`);
+      console.error(`[GooglePlayClient] Error:`, error.message);
+      if (error.errors) {
+        console.error(`[GooglePlayClient] Error details:`, JSON.stringify(error.errors, null, 2));
+      }
       try {
         await this.androidPublisher.edits.delete({
           auth: authClient,
