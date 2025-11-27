@@ -561,34 +561,46 @@ export class AppStoreClient {
       appInfoAttributes.subtitle = data.subtitle;
 
     if (Object.keys(appInfoAttributes).length > 0) {
-      if (appInfoLocalizationResponse.data?.[0]) {
-        const localizationId = appInfoLocalizationResponse.data[0].id;
-        await this.apiRequest(`/appInfoLocalizations/${localizationId}`, {
-          method: "PATCH",
-          body: JSON.stringify({
-            data: {
-              type: "appInfoLocalizations",
-              id: localizationId,
-              attributes: appInfoAttributes,
-            },
-          }),
-        });
-      } else {
-        await this.apiRequest<ApiResponse<AppInfoLocalization>>(
-          `/appInfoLocalizations`,
-          {
-            method: "POST",
+      try {
+        if (appInfoLocalizationResponse.data?.[0]) {
+          const localizationId = appInfoLocalizationResponse.data[0].id;
+          await this.apiRequest(`/appInfoLocalizations/${localizationId}`, {
+            method: "PATCH",
             body: JSON.stringify({
               data: {
                 type: "appInfoLocalizations",
-                attributes: { locale, ...appInfoAttributes },
-                relationships: {
-                  appInfo: { data: { type: "appInfos", id: appInfoId } },
-                },
+                id: localizationId,
+                attributes: appInfoAttributes,
               },
             }),
-          }
-        );
+          });
+        } else {
+          await this.apiRequest<ApiResponse<AppInfoLocalization>>(
+            `/appInfoLocalizations`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                data: {
+                  type: "appInfoLocalizations",
+                  attributes: { locale, ...appInfoAttributes },
+                  relationships: {
+                    appInfo: { data: { type: "appInfos", id: appInfoId } },
+                  },
+                },
+              }),
+            }
+          );
+        }
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        // App Info fields may be locked when app is in certain states (e.g. submitted for review)
+        if (msg.includes("STATE_ERROR") || msg.includes("409 Conflict")) {
+          console.error(
+            `[AppStore] ⚠️  Name/Subtitle update skipped for ${locale}: ${msg}`
+          );
+        } else {
+          throw error;
+        }
       }
     }
 
