@@ -1,104 +1,54 @@
-# 기여 가이드
+# Contributing Guide
 
-## MCP 도구 추가하기
+This project runs as an MCP server for App Store / Play Store ASO workflows. Use the steps below to set up your environment and exercise the existing tools.
 
-새로운 MCP 도구를 추가할 때는 다음 단계를 따르세요:
+## Setup
 
-### 1. 도구 핸들러 함수 작성
+- Use Node.js 18+ and install dependencies with `npm install`.
+- Place credentials under the gitignored `secrets/` directory:
+  - App Store Connect: API key file at `secrets/app-store-key.p8` plus Issuer ID and Key ID.
+  - Google Play Console: service account JSON at `secrets/google-play-service-account.json` with the required store permissions.
+- Create `secrets/aso-config.json` that points to those files:
 
-`servers/mcp/tools/` 폴더에 새 파일을 생성하고 핸들러 함수를 작성합니다.
-
-예시: `servers/mcp/tools/my-new-tool.ts`
-
-```typescript
-/**
- * 새 도구 설명
- */
-export async function handleMyNewTool() {
-  // 도구 로직 구현
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: "결과",
-      },
-    ],
-  };
+```json
+{
+  "appStore": {
+    "issuerId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "keyId": "XXXXXXXXXX",
+    "privateKeyPath": "./secrets/app-store-key.p8"
+  },
+  "googlePlay": {
+    "serviceAccountKeyPath": "./secrets/google-play-service-account.json"
+  }
 }
 ```
 
-### 2. 도구 핸들러 export
+- Data directory: outputs default to the project root. Override with `PABAL_MCP_DATA_DIR` (absolute or repo-relative).
 
-`servers/mcp/tools/index.ts`에 새로운 핸들러를 export합니다:
+## Run locally
 
-```typescript
-export * from "./my-new-tool";
-```
+- Start the MCP server with `npm run dev:mcp` from the project root (stdio server).
+- When connecting from an MCP client, call `run-mcp.sh` so paths resolve correctly and pass any env vars (e.g., `PABAL_MCP_DATA_DIR`).
 
-### 3. MCP 서버에 도구 등록
+## Tool reference (current)
 
-`servers/mcp/index.ts`에서 도구를 등록합니다:
+- Authentication
+  - `auth-check`: Verify App Store Connect / Google Play authentication (`store`: appStore | googlePlay | both).
+- App management
+  - `apps-init`: Fetch apps from the store API and auto-register them. For Google Play, provide `packageName`.
+  - `apps-add`: Register a single app by bundleId/packageName (`identifier`), with optional `slug` and `store`.
+  - `apps-search`: Search registered apps (`query`) with optional `store` filter.
+- ASO data sync
+  - `aso-pull`: Fetch ASO data to the local cache (`app`/`bundleId`/`packageName`, optional `store`, `dryRun`).
+  - `aso-push`: Push cached ASO data to the stores (same targeting options, optional `uploadImages`, `dryRun`).
+- Release management
+  - `release-check-versions`: Show the latest versions per store for the specified app.
+  - `release-create`: Create a new version; accepts `version`, `versionCodes` (for Google Play), and standard app targeting options.
+  - `release-pull-notes`: Retrieve release notes to the local cache (`dryRun` supported).
+  - `release-update-notes`: Update release notes/what's new (`whatsNew` map or `text`+`sourceLocale`, standard targeting).
 
-```typescript
-import { handleMyNewTool } from "./tools";
+Run `npm run tools` to print the current list directly from the server code.
 
-server.registerTool(
-  "my-new-tool",
-  {
-    description: "도구 설명",
-  },
-  handleMyNewTool
-);
-```
+## Tests
 
-### 4. 테스트 파일 작성
-
-`tests/mcp-tools/` 폴더에 테스트 파일을 생성합니다.
-
-예시: `tests/mcp-tools/my-new-tool.test.ts`
-
-```typescript
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
-import { handleMyNewTool } from "../../servers/mcp/tools/my-new-tool";
-
-describe("MCP Tool: my-new-tool", () => {
-  it("예상된 응답을 반환해야 한다", async () => {
-    const result = await handleMyNewTool();
-
-    assert.ok(result.content);
-    assert.equal(result.content.length, 1);
-    assert.equal(result.content[0].type, "text");
-    // 추가 검증 로직
-  });
-});
-```
-
-### 5. 테스트 실행
-
-```bash
-# 모든 테스트 실행
-npm test
-
-# 특정 테스트 파일만 실행
-npm test -- tests/mcp-tools/my-new-tool.test.ts
-```
-
-## 테스트 구조
-
-- `tests/`: 모든 테스트 파일
-  - `mcp-tools/`: MCP 도구별 테스트
-  - 기타 유닛 테스트
-
-모든 테스트는 Node.js 내장 테스트 러너(`node:test`)를 사용합니다.
-
-## 기존 도구 목록
-
-- `auth-check`: App Store / Play Store 인증 상태 확인
-
-
-
-
-
-
-
+- Run the suite with `npm test`.
