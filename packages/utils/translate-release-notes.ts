@@ -134,22 +134,30 @@ export function separateTranslationsByStore({
   const googlePlayTranslations: Record<string, string> = {};
 
   // App Store 번역 수집
+  // 지원하는 로케일에 대해서만 번역을 포함합니다
+  // 번역이 없는 로케일은 포함하지 않습니다 (번역 파이프라인에서 처리해야 함)
   if (appStoreLocales.length > 0) {
     for (const locale of appStoreLocales) {
       if (translations[locale]) {
+        // 해당 로케일의 번역이 있으면 사용
         appStoreTranslations[locale] = translations[locale];
       } else if (locale === sourceLocale && translations[sourceLocale]) {
+        // sourceLocale과 일치하고 sourceLocale 번역이 있으면 사용
         appStoreTranslations[locale] = translations[sourceLocale];
       }
     }
   }
 
   // Google Play 번역 수집
+  // 지원하는 로케일에 대해서만 번역을 포함합니다
+  // 번역이 없는 로케일은 포함하지 않습니다 (번역 파이프라인에서 처리해야 함)
   if (googlePlayLocales.length > 0) {
     for (const locale of googlePlayLocales) {
       if (translations[locale]) {
+        // 해당 로케일의 번역이 있으면 사용
         googlePlayTranslations[locale] = translations[locale];
       } else if (locale === sourceLocale && translations[sourceLocale]) {
+        // sourceLocale과 일치하고 sourceLocale 번역이 있으면 사용
         googlePlayTranslations[locale] = translations[sourceLocale];
       }
     }

@@ -103,7 +103,249 @@ export async function handleUpdateNotes(options: UpdateNotesOptions) {
   let finalWhatsNew: Record<string, string> = {};
 
   if (whatsNew && Object.keys(whatsNew).length > 0) {
-    // Use provided whatsNew directly
+    // Step 1: Get supported locales for the app
+    const config = loadConfig();
+    let appStoreLocales: string[] = [];
+    let googlePlayLocales: string[] = [];
+
+    // Check if locales are already in registered app
+    const {
+      appStore: existingAppStoreLocales,
+      googlePlay: existingGooglePlayLocales,
+    } = collectSupportedLocales({ app: registeredApp, store });
+
+    // If locales are missing, fetch from API
+    if ((store === "both" || store === "appStore") && bundleId) {
+      if (existingAppStoreLocales.length > 0) {
+        appStoreLocales = existingAppStoreLocales;
+      } else if (config.appStore) {
+        // Fetch from App Store API
+        try {
+          const { getAppStoreClient } = await import("@packages/app-store");
+          const client = getAppStoreClient({
+            bundleId,
+            issuerId: config.appStore.issuerId,
+            keyId: config.appStore.keyId,
+            privateKey: config.appStore.privateKey,
+          });
+
+          const appInfo = await fetchAppStoreAppInfo({
+            bundleId,
+            client,
+          });
+
+          if (appInfo.found && appInfo.supportedLocales) {
+            appStoreLocales = appInfo.supportedLocales;
+            // Update registered app with fetched locales
+            if (registeredApp.appStore) {
+              registeredApp.appStore.supportedLocales =
+                appInfo.supportedLocales;
+            }
+          }
+        } catch (error) {
+          console.error(
+            `[MCP]   ⚠️ Failed to fetch App Store locales: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    }
+
+    if ((store === "both" || store === "googlePlay") && packageName) {
+      if (existingGooglePlayLocales.length > 0) {
+        googlePlayLocales = existingGooglePlayLocales;
+      } else if (config.playStore?.serviceAccountJson) {
+        // Fetch from Google Play API
+        try {
+          const appInfo = await fetchGooglePlayAppInfo({
+            packageName,
+            config: config.playStore,
+          });
+
+          if (appInfo.found && appInfo.supportedLocales) {
+            googlePlayLocales = appInfo.supportedLocales;
+            // Update registered app with fetched locales
+            if (registeredApp.googlePlay) {
+              registeredApp.googlePlay.supportedLocales =
+                appInfo.supportedLocales;
+            }
+          }
+        } catch (error) {
+          console.error(
+            `[MCP]   ⚠️ Failed to fetch Google Play locales: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+        }
+      }
+    }
+
+    // Collect all unique supported locales
+    const allSupportedLocales = new Set<string>();
+    if (appStoreLocales.length > 0) {
+      appStoreLocales.forEach((locale) => allSupportedLocales.add(locale));
+    }
+    if (googlePlayLocales.length > 0) {
+      googlePlayLocales.forEach((locale) => allSupportedLocales.add(locale));
+    }
+
+    // Step 2: Check if all supported locales are provided
+    const providedLocales = Object.keys(whatsNew);
+    const missingLocales = Array.from(allSupportedLocales).filter(
+      (locale) => !providedLocales.includes(locale)
+    );
+
+    // Step 3: Detect the language of provided whatsNew
+    const providedText = Object.values(whatsNew)[0]; // Get first provided text
+    const detectedLocale = providedLocales[0]; // Use first provided locale as detected locale
+
+    // If not all supported locales are provided, request translation
+    if (missingLocales.length > 0 && providedText) {
+      // Step 3a: If detected locale is not sourceLocale, translate to sourceLocale first
+      if (detectedLocale !== sourceLocale) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `🌐 Translation Pipeline Required
+
+**Step 1: Translate to Default Locale**
+
+**Detected Locale**: ${detectedLocale}
+**Default Locale** (sourceLocale): ${sourceLocale}
+
+**Text to translate** (${detectedLocale}):
+${providedText}
+
+**Instructions**:
+1. First, translate the text from "${detectedLocale}" to "${sourceLocale}" (default locale)
+2. Then, translate the ${sourceLocale} text to all missing supported locales
+3. Call this function again with the \`whatsNew\` parameter containing all translations
+
+**App Store Supported Locales** (${appStoreLocales.length}):
+${appStoreLocales.length > 0 ? appStoreLocales.join(", ") : "N/A"}
+
+**Google Play Supported Locales** (${googlePlayLocales.length}):
+${googlePlayLocales.length > 0 ? googlePlayLocales.join(", ") : "N/A"}
+
+**Provided Locales** (${providedLocales.length}):
+${providedLocales.join(", ")}
+
+**Missing Locales** (${missingLocales.length}):
+${missingLocales.join(", ")}
+
+**All Required Locales** (${Array.from(allSupportedLocales).length}):
+${Array.from(allSupportedLocales).join(", ")}
+
+Example:
+\`\`\`json
+{
+  "app": "${slug}",
+  "store": "${store}",
+  "whatsNew": {
+    "${detectedLocale}": "${providedText}",
+    "${sourceLocale}": "Translated to default locale",
+    "${missingLocales.join(`": "Translation", "`)}": "Translation",
+    ...
+  }
+}
+\`\`\`
+
+Note: Provide translations for ALL supported locales including the ones already provided.`,
+            },
+          ],
+          _meta: {
+            translationPipeline: {
+              step: 1,
+              detectedLocale,
+              sourceLocale,
+              providedText,
+              providedLocales,
+              missingLocales: Array.from(missingLocales),
+              allSupportedLocales: Array.from(allSupportedLocales),
+              appStoreLocales,
+              googlePlayLocales,
+            },
+            registeredApp,
+            slug,
+            store,
+            versionId,
+          },
+        };
+      }
+
+      // Step 3b: If sourceLocale is already provided or detected, translate to all missing locales
+      const hasSourceLocale =
+        providedLocales.includes(sourceLocale) ||
+        detectedLocale === sourceLocale;
+      const sourceText = whatsNew[sourceLocale] || providedText;
+
+      if (hasSourceLocale) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `🌐 Translation Required
+
+**Step 2: Translate Default Locale to All Supported Locales**
+
+**Source Text** (${sourceLocale}):
+${sourceText}
+
+**App Store Supported Locales** (${appStoreLocales.length}):
+${appStoreLocales.length > 0 ? appStoreLocales.join(", ") : "N/A"}
+
+**Google Play Supported Locales** (${googlePlayLocales.length}):
+${googlePlayLocales.length > 0 ? googlePlayLocales.join(", ") : "N/A"}
+
+**Already Provided Locales** (${providedLocales.length}):
+${providedLocales.join(", ")}
+
+**Missing Locales to Translate** (${missingLocales.length}):
+${missingLocales.join(", ")}
+
+**Instructions**:
+Translate the ${sourceLocale} text to all missing supported locales and call this function again with the \`whatsNew\` parameter containing ALL translations (including the ones already provided).
+
+Example:
+\`\`\`json
+{
+  "app": "${slug}",
+  "store": "${store}",
+  "whatsNew": {
+    "${providedLocales.join(`": "${whatsNew[providedLocales[0]]}", "`)}": "${whatsNew[providedLocales[0]]}",
+    "${sourceLocale}": "${sourceText}",
+    "${missingLocales.join(`": "Translation", "`)}": "Translation",
+    ...
+  }
+}
+\`\`\`
+
+Note: Provide translations for ALL supported locales. Include the already provided translations as well.`,
+            },
+          ],
+          _meta: {
+            translationPipeline: {
+              step: 2,
+              sourceLocale,
+              sourceText,
+              providedLocales,
+              missingLocales: Array.from(missingLocales),
+              allSupportedLocales: Array.from(allSupportedLocales),
+              appStoreLocales,
+              googlePlayLocales,
+            },
+            registeredApp,
+            slug,
+            store,
+            versionId,
+          },
+        };
+      }
+    }
+
+    // All supported locales are provided, use directly
     finalWhatsNew = whatsNew;
   } else if (text) {
     // Step 1: Get supported locales for the app (from registered app or fetch from API)
