@@ -7,11 +7,3 @@
  * Used for operations that can target one or both stores
  */
 export type StoreType = "googlePlay" | "appStore" | "both";
-
-
-
-
-
-
-
-

@@ -17,7 +17,9 @@ import { getProjectRoot } from "@packages/shared/config";
  * Helper function to create AppStoreClient
  * Creates an AppStoreClient instance from AppStoreConfig.
  */
-export function getAppStoreClient(config: AppStoreConfig & { bundleId: string }): AppStoreClient {
+export function getAppStoreClient(
+  config: AppStoreConfig & { bundleId: string }
+): AppStoreClient {
   if (!config) {
     throw new Error("App Store configuration is missing.");
   }
@@ -28,8 +30,13 @@ export function getAppStoreClient(config: AppStoreConfig & { bundleId: string })
     throw new Error("App Store Private Key is required.");
   }
 
-  if (typeof privateKey === "string" && !privateKey.includes("BEGIN PRIVATE KEY")) {
-    throw new Error("Invalid Private Key format. PEM format private key is required.");
+  if (
+    typeof privateKey === "string" &&
+    !privateKey.includes("BEGIN PRIVATE KEY")
+  ) {
+    throw new Error(
+      "Invalid Private Key format. PEM format private key is required."
+    );
   }
 
   return new AppStoreClient({

@@ -33,11 +33,17 @@ export function collectSupportedLocales({
   const appStoreLocales: string[] = [];
   const googlePlayLocales: string[] = [];
 
-  if ((store === "both" || store === "appStore") && app.appStore?.supportedLocales) {
+  if (
+    (store === "both" || store === "appStore") &&
+    app.appStore?.supportedLocales
+  ) {
     appStoreLocales.push(...app.appStore.supportedLocales);
   }
 
-  if ((store === "both" || store === "googlePlay") && app.googlePlay?.supportedLocales) {
+  if (
+    (store === "both" || store === "googlePlay") &&
+    app.googlePlay?.supportedLocales
+  ) {
     googlePlayLocales.push(...app.googlePlay.supportedLocales);
   }
 
@@ -74,7 +80,9 @@ export function createTranslationRequests({
   } = {};
 
   if (appStoreLocales.length > 0) {
-    const targetLocales = appStoreLocales.filter((locale) => locale !== sourceLocale);
+    const targetLocales = appStoreLocales.filter(
+      (locale) => locale !== sourceLocale
+    );
     if (targetLocales.length > 0 || appStoreLocales.includes(sourceLocale)) {
       result.appStore = {
         sourceText,
@@ -86,7 +94,9 @@ export function createTranslationRequests({
   }
 
   if (googlePlayLocales.length > 0) {
-    const targetLocales = googlePlayLocales.filter((locale) => locale !== sourceLocale);
+    const targetLocales = googlePlayLocales.filter(
+      (locale) => locale !== sourceLocale
+    );
     if (targetLocales.length > 0 || googlePlayLocales.includes(sourceLocale)) {
       result.googlePlay = {
         sourceText,
@@ -150,11 +160,3 @@ export function separateTranslationsByStore({
     googlePlay: googlePlayTranslations,
   };
 }
-
-
-
-
-
-
-
-

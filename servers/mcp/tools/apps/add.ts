@@ -24,7 +24,6 @@ interface AddAppOptions {
   store?: "appStore" | "googlePlay" | "both";
 }
 
-
 /**
  * Generate slug (last part of identifier)
  */
@@ -63,9 +62,7 @@ Usage:
   if (existing) {
     // Update language info for existing apps
     const appsConfig = loadRegisteredApps();
-    const appIndex = appsConfig.apps.findIndex(
-      (a) => a.slug === existing.slug
-    );
+    const appIndex = appsConfig.apps.findIndex((a) => a.slug === existing.slug);
 
     if (appIndex >= 0) {
       let updated = false;
@@ -313,12 +310,18 @@ ${results.map((r) => `  • ${r}`).join("\n")}
       .join("+");
 
     const localeInfo: string[] = [];
-    if (appStoreInfo?.supportedLocales && appStoreInfo.supportedLocales.length > 0) {
+    if (
+      appStoreInfo?.supportedLocales &&
+      appStoreInfo.supportedLocales.length > 0
+    ) {
       localeInfo.push(
         `• App Store locales: ${appStoreInfo.supportedLocales.join(", ")}`
       );
     }
-    if (googlePlayInfo?.supportedLocales && googlePlayInfo.supportedLocales.length > 0) {
+    if (
+      googlePlayInfo?.supportedLocales &&
+      googlePlayInfo.supportedLocales.length > 0
+    ) {
       localeInfo.push(
         `• Google Play locales: ${googlePlayInfo.supportedLocales.join(", ")}`
       );

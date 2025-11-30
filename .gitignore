@@ -12,7 +12,9 @@ scripts/run-mcp.sh
 
 # OS / editor
 .DS_Store
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 secrets
 .aso/

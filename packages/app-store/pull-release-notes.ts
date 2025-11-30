@@ -25,11 +25,3 @@ export async function pullAppStoreReleaseNotes({
     releaseNotes,
   };
 }
-
-
-
-
-
-
-
-

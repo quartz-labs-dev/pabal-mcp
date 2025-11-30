@@ -144,11 +144,3 @@ export function toRegisteredGooglePlayInfo({
     supportedLocales: appInfo.supportedLocales,
   };
 }
-
-
-
-
-
-
-
-

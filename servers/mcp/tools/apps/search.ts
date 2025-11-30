@@ -88,7 +88,9 @@ function formatAppInfo(app: RegisteredApp): string {
 export async function handleSearchApps(options: SearchAppsOptions) {
   const { query, store = "all" } = options;
 
-  console.error(`[MCP] 🔍 Searching apps (query: ${query || "all"}, store: ${store})`);
+  console.error(
+    `[MCP] 🔍 Searching apps (query: ${query || "all"}, store: ${store})`
+  );
 
   try {
     const config = loadRegisteredApps();

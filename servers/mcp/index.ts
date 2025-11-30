@@ -27,8 +27,7 @@ chdir(projectRoot);
 const server = new McpServer(
   { name: "pabal-mcp", version: "0.0.1" },
   {
-    instructions:
-      "Provides tools for App Store/Play Store ASO.",
+    instructions: "Provides tools for App Store/Play Store ASO.",
   }
 );
 

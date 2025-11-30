@@ -36,4 +36,3 @@ export async function checkAppStoreLatestVersion({
     return `🍎 App Store: Check failed - ${msg}`;
   }
 }
-

@@ -54,7 +54,9 @@ export async function updateAppStoreReleaseNotes({
 
   // 지원 로케일 필터링
   const localesToUpdate = supportedLocales
-    ? Object.keys(releaseNotes).filter((locale) => supportedLocales.includes(locale))
+    ? Object.keys(releaseNotes).filter((locale) =>
+        supportedLocales.includes(locale)
+      )
     : Object.keys(releaseNotes);
 
   // 각 로케일별로 업데이트
@@ -79,11 +81,3 @@ export async function updateAppStoreReleaseNotes({
 
   return result;
 }
-
-
-
-
-
-
-
-

@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Secrets and config
+secrets/
+
+# Package manager
+yarn.lock
+
+# Git
+.git/
+.husky/_/

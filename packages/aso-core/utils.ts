@@ -39,7 +39,7 @@ export function ensureDir(dirPath: string): void {
 // ============================================================================
 
 export function convertToMultilingual<
-  T extends { locale?: string; defaultLanguage?: string }
+  T extends { locale?: string; defaultLanguage?: string },
 >(
   data: T,
   locale?: string

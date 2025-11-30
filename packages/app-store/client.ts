@@ -217,9 +217,8 @@ export class AppStoreClient {
     let nextUrl: string | null = `/apps?limit=200`;
 
     while (nextUrl) {
-      const response: ApiResponse<AppStoreApp[]> = await this.apiRequest<
-        ApiResponse<AppStoreApp[]>
-      >(nextUrl);
+      const response: ApiResponse<AppStoreApp[]> =
+        await this.apiRequest<ApiResponse<AppStoreApp[]>>(nextUrl);
 
       for (const app of response.data || []) {
         // Check release status
@@ -455,9 +454,9 @@ export class AppStoreClient {
     const appInfoLocalizationsResponse = await this.apiRequest<
       ApiResponse<AppInfoLocalization[]>
     >(`/appInfos/${appInfoId}/appInfoLocalizations`);
-    const appInfoLocalizationMap = (appInfoLocalizationsResponse.data || []).reduce<
-      Record<string, AppInfoLocalization>
-    >((acc, loc) => {
+    const appInfoLocalizationMap = (
+      appInfoLocalizationsResponse.data || []
+    ).reduce<Record<string, AppInfoLocalization>>((acc, loc) => {
       if (loc.attributes.locale) acc[loc.attributes.locale] = loc;
       return acc;
     }, {});
@@ -521,7 +520,8 @@ export class AppStoreClient {
 
       locales[locale] = {
         name:
-          appInfoLocalizationMap[locale]?.attributes.name || app.attributes.name,
+          appInfoLocalizationMap[locale]?.attributes.name ||
+          app.attributes.name,
         subtitle: appInfoLocalizationMap[locale]?.attributes.subtitle,
         description: detailedLocalization?.attributes.description || "",
         keywords: detailedLocalization?.attributes.keywords,

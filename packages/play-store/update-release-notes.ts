@@ -75,11 +75,3 @@ export async function updateGooglePlayReleaseNotes({
 
   return result;
 }
-
-
-
-
-
-
-
-

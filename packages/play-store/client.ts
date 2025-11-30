@@ -53,9 +53,9 @@ export class GooglePlayClient {
    * Verify app access (returns app information)
    * Google Play API does not support listing apps, so only verifies access by package name
    */
-  async verifyAppAccess(): Promise<{ 
-    packageName: string; 
-    title?: string; 
+  async verifyAppAccess(): Promise<{
+    packageName: string;
+    title?: string;
     defaultLanguage?: string;
     supportedLocales?: string[];
   }> {
@@ -178,30 +178,41 @@ export class GooglePlayClient {
 
         for (const imageType of imageTypes) {
           try {
-            const imagesResponse = await this.androidPublisher.edits.images.list({
-              auth: authClient,
-              packageName: this.packageName,
-              editId,
-              language,
-              imageType,
-            });
+            const imagesResponse =
+              await this.androidPublisher.edits.images.list({
+                auth: authClient,
+                packageName: this.packageName,
+                editId,
+                language,
+                imageType,
+              });
 
             const images = imagesResponse.data.images || [];
 
             if (imageType === "featureGraphic") {
               featureGraphic = images[0]?.url;
             } else {
-              const urls = images.map((img: any) => img.url).filter(Boolean) as string[];
-              if (imageType === "phoneScreenshots") screenshots.phone.push(...urls);
-              else if (imageType === "sevenInchScreenshots") screenshots.tablet7.push(...urls);
-              else if (imageType === "tenInchScreenshots") screenshots.tablet10.push(...urls);
-              else if (imageType === "tvScreenshots") screenshots.tv.push(...urls);
-              else if (imageType === "wearScreenshots") screenshots.wear.push(...urls);
+              const urls = images
+                .map((img: any) => img.url)
+                .filter(Boolean) as string[];
+              if (imageType === "phoneScreenshots")
+                screenshots.phone.push(...urls);
+              else if (imageType === "sevenInchScreenshots")
+                screenshots.tablet7.push(...urls);
+              else if (imageType === "tenInchScreenshots")
+                screenshots.tablet10.push(...urls);
+              else if (imageType === "tvScreenshots")
+                screenshots.tv.push(...urls);
+              else if (imageType === "wearScreenshots")
+                screenshots.wear.push(...urls);
             }
           } catch (error: unknown) {
             const err = error as { code?: number; message?: string };
             if (err.code !== 404) {
-              console.warn(`⚠️  Failed to fetch ${imageType} images for ${language}:`, err.message);
+              console.warn(
+                `⚠️  Failed to fetch ${imageType} images for ${language}:`,
+                err.message
+              );
             }
           }
         }
@@ -309,17 +320,27 @@ export class GooglePlayClient {
           if (imageType === "featureGraphic") {
             featureGraphic = images[0]?.url;
           } else {
-            const urls = images.map((img: any) => img.url).filter(Boolean) as string[];
-            if (imageType === "phoneScreenshots") screenshots.phone.push(...urls);
-            else if (imageType === "sevenInchScreenshots") screenshots.tablet7.push(...urls);
-            else if (imageType === "tenInchScreenshots") screenshots.tablet10.push(...urls);
-            else if (imageType === "tvScreenshots") screenshots.tv.push(...urls);
-            else if (imageType === "wearScreenshots") screenshots.wear.push(...urls);
+            const urls = images
+              .map((img: any) => img.url)
+              .filter(Boolean) as string[];
+            if (imageType === "phoneScreenshots")
+              screenshots.phone.push(...urls);
+            else if (imageType === "sevenInchScreenshots")
+              screenshots.tablet7.push(...urls);
+            else if (imageType === "tenInchScreenshots")
+              screenshots.tablet10.push(...urls);
+            else if (imageType === "tvScreenshots")
+              screenshots.tv.push(...urls);
+            else if (imageType === "wearScreenshots")
+              screenshots.wear.push(...urls);
           }
         } catch (error: unknown) {
           const err = error as { code?: number; message?: string };
           if (err.code !== 404) {
-            console.warn(`⚠️  Failed to fetch ${imageType} images:`, err.message);
+            console.warn(
+              `⚠️  Failed to fetch ${imageType} images:`,
+              err.message
+            );
           }
         }
       }
@@ -363,10 +384,15 @@ export class GooglePlayClient {
         // Build request body with only defined values
         const listingBody: Record<string, string> = {};
         if (data.title) listingBody.title = data.title;
-        if (data.shortDescription) listingBody.shortDescription = data.shortDescription;
-        if (data.fullDescription) listingBody.fullDescription = data.fullDescription;
+        if (data.shortDescription)
+          listingBody.shortDescription = data.shortDescription;
+        if (data.fullDescription)
+          listingBody.fullDescription = data.fullDescription;
 
-        console.error(`[GooglePlayClient] Updating listing for ${language}:`, JSON.stringify(listingBody, null, 2));
+        console.error(
+          `[GooglePlayClient] Updating listing for ${language}:`,
+          JSON.stringify(listingBody, null, 2)
+        );
 
         try {
           await this.androidPublisher.edits.listings.update({
@@ -376,16 +402,29 @@ export class GooglePlayClient {
             language,
             requestBody: listingBody,
           });
-          console.error(`[GooglePlayClient] ✅ Listing updated for ${language}`);
+          console.error(
+            `[GooglePlayClient] ✅ Listing updated for ${language}`
+          );
         } catch (listingError: any) {
-          console.error(`[GooglePlayClient] ❌ Listing update failed for ${language}`);
+          console.error(
+            `[GooglePlayClient] ❌ Listing update failed for ${language}`
+          );
           console.error(`[GooglePlayClient] Error code:`, listingError.code);
-          console.error(`[GooglePlayClient] Error message:`, listingError.message);
+          console.error(
+            `[GooglePlayClient] Error message:`,
+            listingError.message
+          );
           if (listingError.errors) {
-            console.error(`[GooglePlayClient] Error details:`, JSON.stringify(listingError.errors, null, 2));
+            console.error(
+              `[GooglePlayClient] Error details:`,
+              JSON.stringify(listingError.errors, null, 2)
+            );
           }
           if (listingError.response?.data) {
-            console.error(`[GooglePlayClient] Response data:`, JSON.stringify(listingError.response.data, null, 2));
+            console.error(
+              `[GooglePlayClient] Response data:`,
+              JSON.stringify(listingError.response.data, null, 2)
+            );
           }
           throw listingError;
         }
@@ -396,9 +435,13 @@ export class GooglePlayClient {
         const detailsBody: Record<string, string> = {};
         if (data.contactEmail) detailsBody.contactEmail = data.contactEmail;
         if (data.contactPhone) detailsBody.contactPhone = data.contactPhone;
-        if (data.contactWebsite) detailsBody.contactWebsite = data.contactWebsite;
+        if (data.contactWebsite)
+          detailsBody.contactWebsite = data.contactWebsite;
 
-        console.error(`[GooglePlayClient] Updating details:`, JSON.stringify(detailsBody, null, 2));
+        console.error(
+          `[GooglePlayClient] Updating details:`,
+          JSON.stringify(detailsBody, null, 2)
+        );
 
         try {
           await this.androidPublisher.edits.details.update({
@@ -411,12 +454,21 @@ export class GooglePlayClient {
         } catch (detailsError: any) {
           console.error(`[GooglePlayClient] ❌ Details update failed`);
           console.error(`[GooglePlayClient] Error code:`, detailsError.code);
-          console.error(`[GooglePlayClient] Error message:`, detailsError.message);
+          console.error(
+            `[GooglePlayClient] Error message:`,
+            detailsError.message
+          );
           if (detailsError.errors) {
-            console.error(`[GooglePlayClient] Error details:`, JSON.stringify(detailsError.errors, null, 2));
+            console.error(
+              `[GooglePlayClient] Error details:`,
+              JSON.stringify(detailsError.errors, null, 2)
+            );
           }
           if (detailsError.response?.data) {
-            console.error(`[GooglePlayClient] Response data:`, JSON.stringify(detailsError.response.data, null, 2));
+            console.error(
+              `[GooglePlayClient] Response data:`,
+              JSON.stringify(detailsError.response.data, null, 2)
+            );
           }
           throw detailsError;
         }
@@ -444,7 +496,9 @@ export class GooglePlayClient {
    * Push multilingual ASO data in a single edit session
    * This prevents backendError from rapid successive commits
    */
-  async pushMultilingualAsoData(data: GooglePlayMultilingualAsoData): Promise<void> {
+  async pushMultilingualAsoData(
+    data: GooglePlayMultilingualAsoData
+  ): Promise<void> {
     const authClient = await this.auth.getClient();
 
     const editResponse = await this.androidPublisher.edits.insert({
@@ -455,18 +509,28 @@ export class GooglePlayClient {
     const editId = editResponse.data.id!;
     const locales = Object.keys(data.locales);
 
-    console.error(`[GooglePlayClient] Starting multilingual push for ${locales.length} locale(s): ${locales.join(", ")}`);
+    console.error(
+      `[GooglePlayClient] Starting multilingual push for ${locales.length} locale(s): ${locales.join(", ")}`
+    );
 
     try {
       // Update listings for all languages in a single edit session
       for (const [language, localeData] of Object.entries(data.locales)) {
-        if (localeData.title || localeData.shortDescription || localeData.fullDescription) {
+        if (
+          localeData.title ||
+          localeData.shortDescription ||
+          localeData.fullDescription
+        ) {
           const listingBody: Record<string, string> = {};
           if (localeData.title) listingBody.title = localeData.title;
-          if (localeData.shortDescription) listingBody.shortDescription = localeData.shortDescription;
-          if (localeData.fullDescription) listingBody.fullDescription = localeData.fullDescription;
+          if (localeData.shortDescription)
+            listingBody.shortDescription = localeData.shortDescription;
+          if (localeData.fullDescription)
+            listingBody.fullDescription = localeData.fullDescription;
 
-          console.error(`[GooglePlayClient] Updating listing for ${language}...`);
+          console.error(
+            `[GooglePlayClient] Updating listing for ${language}...`
+          );
 
           try {
             await this.androidPublisher.edits.listings.update({
@@ -476,13 +540,23 @@ export class GooglePlayClient {
               language,
               requestBody: listingBody,
             });
-            console.error(`[GooglePlayClient] ✅ Listing prepared for ${language}`);
+            console.error(
+              `[GooglePlayClient] ✅ Listing prepared for ${language}`
+            );
           } catch (listingError: any) {
-            console.error(`[GooglePlayClient] ❌ Listing update failed for ${language}`);
+            console.error(
+              `[GooglePlayClient] ❌ Listing update failed for ${language}`
+            );
             console.error(`[GooglePlayClient] Error code:`, listingError.code);
-            console.error(`[GooglePlayClient] Error message:`, listingError.message);
+            console.error(
+              `[GooglePlayClient] Error message:`,
+              listingError.message
+            );
             if (listingError.errors) {
-              console.error(`[GooglePlayClient] Error details:`, JSON.stringify(listingError.errors, null, 2));
+              console.error(
+                `[GooglePlayClient] Error details:`,
+                JSON.stringify(listingError.errors, null, 2)
+              );
             }
             throw listingError;
           }
@@ -502,32 +576,52 @@ export class GooglePlayClient {
           packageName: this.packageName,
           editId,
         });
-        console.error(`[GooglePlayClient] ✅ All ${locales.length} locale(s) committed successfully`);
+        console.error(
+          `[GooglePlayClient] ✅ All ${locales.length} locale(s) committed successfully`
+        );
       } catch (commitError: any) {
         console.error(`[GooglePlayClient] ❌ Commit failed`);
         console.error(`[GooglePlayClient] Error code:`, commitError.code);
         console.error(`[GooglePlayClient] Error message:`, commitError.message);
         console.error(`[GooglePlayClient] Error status:`, commitError.status);
         if (commitError.errors) {
-          console.error(`[GooglePlayClient] Error details:`, JSON.stringify(commitError.errors, null, 2));
+          console.error(
+            `[GooglePlayClient] Error details:`,
+            JSON.stringify(commitError.errors, null, 2)
+          );
         }
         if (commitError.response?.data) {
-          console.error(`[GooglePlayClient] Response data:`, JSON.stringify(commitError.response.data, null, 2));
+          console.error(
+            `[GooglePlayClient] Response data:`,
+            JSON.stringify(commitError.response.data, null, 2)
+          );
         }
         if (commitError.response?.status) {
-          console.error(`[GooglePlayClient] Response status:`, commitError.response.status);
+          console.error(
+            `[GooglePlayClient] Response status:`,
+            commitError.response.status
+          );
         }
         if (commitError.response?.statusText) {
-          console.error(`[GooglePlayClient] Response statusText:`, commitError.response.statusText);
+          console.error(
+            `[GooglePlayClient] Response statusText:`,
+            commitError.response.statusText
+          );
         }
         if (commitError.response?.headers) {
-          console.error(`[GooglePlayClient] Response headers:`, JSON.stringify(commitError.response.headers, null, 2));
+          console.error(
+            `[GooglePlayClient] Response headers:`,
+            JSON.stringify(commitError.response.headers, null, 2)
+          );
         }
         throw commitError;
       }
     } catch (error: any) {
       console.error(`[GooglePlayClient] Rolling back edit due to error...`);
-      console.error(`[GooglePlayClient] Full error object:`, JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+      console.error(
+        `[GooglePlayClient] Full error object:`,
+        JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+      );
       try {
         await this.androidPublisher.edits.delete({
           auth: authClient,
@@ -552,7 +646,11 @@ export class GooglePlayClient {
     contactWebsite?: string;
     defaultLanguage?: string;
   }): Promise<void> {
-    if (!details.contactEmail && !details.contactPhone && !details.contactWebsite) {
+    if (
+      !details.contactEmail &&
+      !details.contactPhone &&
+      !details.contactWebsite
+    ) {
       console.error(`[GooglePlayClient] No app details to update, skipping`);
       return;
     }
@@ -580,7 +678,9 @@ export class GooglePlayClient {
           editId,
         });
         defaultLanguage = currentDetails.data.defaultLanguage || "en-US";
-        console.error(`[GooglePlayClient] Current defaultLanguage: ${defaultLanguage}`);
+        console.error(
+          `[GooglePlayClient] Current defaultLanguage: ${defaultLanguage}`
+        );
       }
 
       const detailsBody: Record<string, string> = {
@@ -588,9 +688,13 @@ export class GooglePlayClient {
       };
       if (details.contactEmail) detailsBody.contactEmail = details.contactEmail;
       if (details.contactPhone) detailsBody.contactPhone = details.contactPhone;
-      if (details.contactWebsite) detailsBody.contactWebsite = details.contactWebsite;
+      if (details.contactWebsite)
+        detailsBody.contactWebsite = details.contactWebsite;
 
-      console.error(`[GooglePlayClient] Updating details:`, JSON.stringify(detailsBody, null, 2));
+      console.error(
+        `[GooglePlayClient] Updating details:`,
+        JSON.stringify(detailsBody, null, 2)
+      );
 
       await this.androidPublisher.edits.details.update({
         auth: authClient,
@@ -612,7 +716,10 @@ export class GooglePlayClient {
       console.error(`[GooglePlayClient] Rolling back edit due to error...`);
       console.error(`[GooglePlayClient] Error:`, error.message);
       if (error.errors) {
-        console.error(`[GooglePlayClient] Error details:`, JSON.stringify(error.errors, null, 2));
+        console.error(
+          `[GooglePlayClient] Error details:`,
+          JSON.stringify(error.errors, null, 2)
+        );
       }
       try {
         await this.androidPublisher.edits.delete({
@@ -716,8 +823,13 @@ export class GooglePlayClient {
       let latestVersionCode = 0;
 
       for (const release of releases) {
-        const versionCodes = (release.versionCodes || []).map((code: string | number) => Number(code));
-        const maxVersionCode = versionCodes.reduce((max: number, code: number) => Math.max(max, code), 0);
+        const versionCodes = (release.versionCodes || []).map(
+          (code: string | number) => Number(code)
+        );
+        const maxVersionCode = versionCodes.reduce(
+          (max: number, code: number) => Math.max(max, code),
+          0
+        );
 
         if (!latestRelease || maxVersionCode > latestVersionCode) {
           latestRelease = release;
@@ -730,11 +842,15 @@ export class GooglePlayClient {
       }
 
       const releaseDate = (latestRelease as any).releaseDate?.seconds
-        ? new Date(Number((latestRelease as any).releaseDate.seconds) * 1000).toISOString()
+        ? new Date(
+            Number((latestRelease as any).releaseDate.seconds) * 1000
+          ).toISOString()
         : undefined;
 
       return {
-        versionCodes: (latestRelease.versionCodes || []).map((code: string | number) => Number(code)),
+        versionCodes: (latestRelease.versionCodes || []).map(
+          (code: string | number) => Number(code)
+        ),
         status: latestRelease.status ?? undefined,
         versionName: latestRelease.name ?? undefined,
         releaseName: latestRelease.name ?? undefined,
@@ -757,7 +873,9 @@ export class GooglePlayClient {
     const { versionCodes, releaseName, status = "draft" } = options;
 
     if (!versionCodes || versionCodes.length === 0) {
-      throw new Error("At least one versionCode is required to create a release.");
+      throw new Error(
+        "At least one versionCode is required to create a release."
+      );
     }
 
     const authClient = await this.auth.getClient();
@@ -775,7 +893,13 @@ export class GooglePlayClient {
         track: "production",
         requestBody: {
           track: "production",
-          releases: [{ name: releaseName, status, versionCodes: versionCodes.map(String) }],
+          releases: [
+            {
+              name: releaseName,
+              status,
+              versionCodes: versionCodes.map(String),
+            },
+          ],
         },
       });
 
@@ -800,7 +924,10 @@ export class GooglePlayClient {
   async updateReleaseNotes(options: {
     releaseNotes: Record<string, string>; // { "en-US": "Bug fixes", "ko": "Bug fixes" }
     track?: string;
-  }): Promise<{ updated: string[]; failed: Array<{ locale: string; error: string }> }> {
+  }): Promise<{
+    updated: string[];
+    failed: Array<{ locale: string; error: string }>;
+  }> {
     const { releaseNotes, track = "production" } = options;
 
     const authClient = await this.auth.getClient();
@@ -826,10 +953,12 @@ export class GooglePlayClient {
 
       // Add release notes to latest release
       const latestRelease = releases[0];
-      const releaseNotesArray = Object.entries(releaseNotes).map(([language, text]) => ({
-        language,
-        text,
-      }));
+      const releaseNotesArray = Object.entries(releaseNotes).map(
+        ([language, text]) => ({
+          language,
+          text,
+        })
+      );
 
       // Update track
       await this.androidPublisher.edits.tracks.update({
@@ -910,7 +1039,9 @@ export class GooglePlayClient {
           const versionCodes = release.versionCodes || [];
           const status = release.status || "draft";
           const releaseDate = (release as any).releaseDate?.seconds
-            ? new Date(Number((release as any).releaseDate.seconds) * 1000).toISOString()
+            ? new Date(
+                Number((release as any).releaseDate.seconds) * 1000
+              ).toISOString()
             : undefined;
 
           for (const versionCode of versionCodes) {
