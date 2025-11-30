@@ -6,7 +6,7 @@ import { prepareAsoDataForPush, type PreparedAsoData } from "./utils";
 import { pushAppStoreAso, getAppStoreClient } from "@packages/app-store";
 import { pushGooglePlayAso, getPlayStoreClient } from "@packages/play-store";
 import type { EnvConfig } from "@packages/common/config";
-import { findApp } from "@packages/utils";
+import { findApp, updateAppSupportedLocales } from "@packages/utils";
 
 export async function pushToGooglePlay({
   config,
@@ -49,7 +49,25 @@ export async function pushToGooglePlay({
 
   const result = await pushGooglePlayAso({ client, asoData: googlePlayData });
 
-  if (result.success) {
+  if (
+    result.success &&
+    result.localesPushed &&
+    result.localesPushed.length > 0
+  ) {
+    // Update registered-apps.json with pushed locales
+    const appIdentifier = packageName;
+    if (appIdentifier) {
+      const updated = updateAppSupportedLocales({
+        identifier: appIdentifier,
+        store: "googlePlay",
+        locales: result.localesPushed,
+      });
+      if (updated) {
+        console.error(
+          `[MCP]   ✅ Updated registered-apps.json with ${result.localesPushed.length} Google Play locales`
+        );
+      }
+    }
     return `✅ Google Play data pushed (${result.localesPushed.length} locales)`;
   }
   return `❌ Google Play push failed: ${result.error}`;
@@ -97,8 +115,26 @@ export async function pushToAppStore({
 
   const result = await pushAppStoreAso({ client, asoData: appStoreData });
 
-  if (result.success) {
-    return `✅ App Store data pushed`;
+  if (
+    result.success &&
+    result.localesPushed &&
+    result.localesPushed.length > 0
+  ) {
+    // Update registered-apps.json with pushed locales
+    const appIdentifier = bundleId;
+    if (appIdentifier) {
+      const updated = updateAppSupportedLocales({
+        identifier: appIdentifier,
+        store: "appStore",
+        locales: result.localesPushed,
+      });
+      if (updated) {
+        console.error(
+          `[MCP]   ✅ Updated registered-apps.json with ${result.localesPushed.length} App Store locales`
+        );
+      }
+    }
+    return `✅ App Store data pushed (${result.localesPushed.length} locales)`;
   }
 
   if (result.needsNewVersion && result.versionInfo) {

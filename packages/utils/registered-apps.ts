@@ -115,3 +115,56 @@ export function findApp(identifier: string): RegisteredApp | undefined {
       app.googlePlay?.packageName === identifier
   );
 }
+
+/**
+ * Update supported locales for an app
+ */
+export function updateAppSupportedLocales({
+  identifier,
+  store,
+  locales,
+}: {
+  identifier: string;
+  store: "appStore" | "googlePlay";
+  locales: string[];
+}): boolean {
+  const config = loadRegisteredApps();
+  const appIndex = config.apps.findIndex(
+    (app) =>
+      app.slug === identifier ||
+      app.appStore?.bundleId === identifier ||
+      app.googlePlay?.packageName === identifier
+  );
+
+  if (appIndex === -1) {
+    return false;
+  }
+
+  const app = config.apps[appIndex];
+
+  // Merge and deduplicate locales
+  const existingLocales =
+    store === "appStore"
+      ? app.appStore?.supportedLocales || []
+      : app.googlePlay?.supportedLocales || [];
+
+  const mergedLocales = Array.from(
+    new Set([...existingLocales, ...locales])
+  ).sort();
+
+  // Update the app
+  if (store === "appStore") {
+    if (!app.appStore) {
+      return false;
+    }
+    app.appStore.supportedLocales = mergedLocales;
+  } else {
+    if (!app.googlePlay) {
+      return false;
+    }
+    app.googlePlay.supportedLocales = mergedLocales;
+  }
+
+  saveRegisteredApps(config);
+  return true;
+}

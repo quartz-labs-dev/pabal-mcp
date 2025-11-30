@@ -18,7 +18,7 @@ import {
   getScreenshotFilePath,
 } from "@packages/aso";
 import { getStoreTargets, loadConfig } from "@packages/common";
-import { findApp } from "@packages/utils";
+import { findApp, updateAppSupportedLocales } from "@packages/utils";
 
 interface AsoPullOptions {
   app?: string; // Registered app slug
@@ -230,6 +230,21 @@ export async function handleAsoPull(options: AsoPullOptions) {
         const data = await client.pullAllLanguagesAsoData();
         syncedData.googlePlay = data;
         console.error(`[MCP]   ✅ Google Play data fetched`);
+
+        // Update registered-apps.json with pulled locales
+        if (data.locales && Object.keys(data.locales).length > 0) {
+          const locales = Object.keys(data.locales);
+          const updated = updateAppSupportedLocales({
+            identifier: packageName,
+            store: "googlePlay",
+            locales,
+          });
+          if (updated) {
+            console.error(
+              `[MCP]   ✅ Updated registered-apps.json with ${locales.length} Google Play locales`
+            );
+          }
+        }
       } catch (error) {
         console.error(`[MCP]   ❌ Google Play fetch failed:`, error);
       }
@@ -256,6 +271,21 @@ export async function handleAsoPull(options: AsoPullOptions) {
         const data = await client.pullAllLocalesAsoData();
         syncedData.appStore = data;
         console.error(`[MCP]   ✅ App Store data fetched`);
+
+        // Update registered-apps.json with pulled locales
+        if (data.locales && Object.keys(data.locales).length > 0) {
+          const locales = Object.keys(data.locales);
+          const updated = updateAppSupportedLocales({
+            identifier: bundleId,
+            store: "appStore",
+            locales,
+          });
+          if (updated) {
+            console.error(
+              `[MCP]   ✅ Updated registered-apps.json with ${locales.length} App Store locales`
+            );
+          }
+        }
       } catch (error) {
         console.error(`[MCP]   ❌ App Store fetch failed:`, error);
       }
