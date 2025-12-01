@@ -8,12 +8,14 @@ import {
   findApp,
   loadRegisteredApps,
   saveRegisteredApps,
-  fetchAppStoreAppInfo,
-  fetchGooglePlayAppInfo,
   toRegisteredAppStoreInfo,
   toRegisteredGooglePlayInfo,
   type RegisteredApp,
 } from "@packages/utils";
+import { AppStoreService, GooglePlayService } from "@servers/mcp/core/services";
+
+const appStoreService = new AppStoreService();
+const googlePlayService = new GooglePlayService();
 
 interface AddAppOptions {
   /** App identifier (bundleId or packageName) */
@@ -71,10 +73,7 @@ Usage:
       // Update App Store language info
       if (store === "both" || store === "appStore") {
         if (existing.appStore) {
-          const asResult = await fetchAppStoreAppInfo({
-            bundleId: identifier,
-            config: config.appStore,
-          });
+          const asResult = await appStoreService.fetchAppInfo(identifier);
 
           if (asResult.found && asResult.supportedLocales) {
             if (!appsConfig.apps[appIndex].appStore) {
@@ -97,10 +96,7 @@ Usage:
       // Update Google Play language info
       if (store === "both" || store === "googlePlay") {
         if (existing.googlePlay || store === "googlePlay") {
-          const gpResult = await fetchGooglePlayAppInfo({
-            packageName: identifier,
-            config: config.playStore,
-          });
+          const gpResult = await googlePlayService.fetchAppInfo(identifier);
 
           if (gpResult.found && gpResult.supportedLocales) {
             if (!appsConfig.apps[appIndex].googlePlay) {
@@ -228,10 +224,7 @@ ${localeInfo.length > 0 ? `\n**Supported Languages:**\n${localeInfo.map((l) => `
   // Check App Store
   if (store === "both" || store === "appStore") {
     console.error(`[MCP]   🔍 Searching App Store for: ${identifier}`);
-    const asResult = await fetchAppStoreAppInfo({
-      bundleId: identifier,
-      config: config.appStore,
-    });
+    const asResult = await appStoreService.fetchAppInfo(identifier);
     if (asResult.found) {
       appStoreInfo = toRegisteredAppStoreInfo({
         bundleId: identifier,
@@ -251,10 +244,7 @@ ${localeInfo.length > 0 ? `\n**Supported Languages:**\n${localeInfo.map((l) => `
   // Check Google Play
   if (store === "both" || store === "googlePlay") {
     console.error(`[MCP]   🔍 Searching Google Play for: ${identifier}`);
-    const gpResult = await fetchGooglePlayAppInfo({
-      packageName: identifier,
-      config: config.playStore,
-    });
+    const gpResult = await googlePlayService.fetchAppInfo(identifier);
     if (gpResult.found) {
       googlePlayInfo = toRegisteredGooglePlayInfo({
         packageName: identifier,

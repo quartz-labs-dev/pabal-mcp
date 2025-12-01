@@ -4,21 +4,18 @@
 
 import { loadConfig } from "@packages/common";
 import {
-  createAppStoreClient,
-  createGooglePlayClient,
-} from "@servers/mcp/core/clients";
-import type { PlayStoreConfig } from "@packages/common/config";
-import {
   registerApp,
   findApp,
   loadRegisteredApps,
   saveRegisteredApps,
-  fetchAppStoreAppInfo,
-  fetchGooglePlayAppInfo,
   toRegisteredAppStoreInfo,
   toRegisteredGooglePlayInfo,
   type RegisteredApp,
 } from "@packages/utils";
+import { AppStoreService, GooglePlayService } from "@servers/mcp/core/services";
+
+const appStoreService = new AppStoreService();
+const googlePlayService = new GooglePlayService();
 
 interface SetupAppsOptions {
   store?: "appStore" | "googlePlay" | "both";
@@ -28,29 +25,21 @@ interface SetupAppsOptions {
 /**
  * Check Play Store access (기존 호환성을 위한 래퍼)
  */
-async function checkPlayStoreAccess(
-  packageName: string,
-  playStoreConfig: PlayStoreConfig
-): Promise<{
+async function checkPlayStoreAccess(packageName: string): Promise<{
   accessible: boolean;
   title?: string;
   supportedLocales?: string[];
 }> {
-  const clientResult = createGooglePlayClient({ packageName });
-  if (!clientResult.success) {
+  const appInfo = await googlePlayService.fetchAppInfo(packageName);
+  if (!appInfo.found) {
     return { accessible: false };
   }
 
-  try {
-    const appInfo = await clientResult.client.verifyAppAccess();
-    return {
-      accessible: true,
-      title: appInfo.title,
-      supportedLocales: appInfo.supportedLocales,
-    };
-  } catch {
-    return { accessible: false };
-  }
+  return {
+    accessible: true,
+    title: appInfo.name,
+    supportedLocales: appInfo.supportedLocales,
+  };
 }
 
 export async function handleSetupApps(options: SetupAppsOptions) {
@@ -72,9 +61,7 @@ export async function handleSetupApps(options: SetupAppsOptions) {
       };
     }
 
-    const clientResult = createAppStoreClient({
-      bundleId: "dummy", // listAllApps() does not use bundleId
-    });
+    const clientResult = appStoreService.createClient("dummy"); // listAllApps() does not use bundleId
 
     if (!clientResult.success) {
       return {
@@ -89,15 +76,13 @@ export async function handleSetupApps(options: SetupAppsOptions) {
 
     try {
       console.error(`[MCP]   📋 Fetching app list from App Store...`);
-      const apps = await clientResult.client.listAllApps({
+      const apps = await clientResult.data.listAllApps({
         onlyReleased: true,
       });
       console.error(`[MCP]   ✅ Found ${apps.length} apps`);
 
       // 모든 앱의 언어 정보를 미리 가져오기 위한 클라이언트 인스턴스
-      const appInfoClientResult = createAppStoreClient({
-        bundleId: "dummy",
-      });
+      const appInfoClientResult = appStoreService.createClient("dummy");
 
       if (!appInfoClientResult.success) {
         return {
@@ -110,7 +95,7 @@ export async function handleSetupApps(options: SetupAppsOptions) {
         };
       }
 
-      const appInfoClient = appInfoClientResult.client;
+      const appInfoClient = appInfoClientResult.data;
 
       if (apps.length === 0) {
         return {
@@ -164,10 +149,10 @@ export async function handleSetupApps(options: SetupAppsOptions) {
 
             // Update App Store language info
             if (existing.appStore) {
-              const appStoreInfo = await fetchAppStoreAppInfo({
-                bundleId: app.bundleId,
-                client: appInfoClient,
-              });
+              const appStoreInfo = await appStoreService.fetchAppInfo(
+                app.bundleId,
+                appInfoClient
+              );
 
               if (appStoreInfo.found && appStoreInfo.supportedLocales) {
                 if (!appsConfig.apps[appIndex].appStore) {
@@ -185,10 +170,7 @@ export async function handleSetupApps(options: SetupAppsOptions) {
 
             // Update Google Play info (when in both mode)
             if (playStoreEnabled) {
-              const playResult = await checkPlayStoreAccess(
-                app.bundleId,
-                config.playStore!
-              );
+              const playResult = await checkPlayStoreAccess(app.bundleId);
               if (playResult.accessible) {
                 if (!appsConfig.apps[appIndex].googlePlay) {
                   appsConfig.apps[appIndex].googlePlay = {
@@ -223,18 +205,15 @@ export async function handleSetupApps(options: SetupAppsOptions) {
         }
 
         // App Store 정보 가져오기 (언어 정보 포함)
-        const appStoreInfo = await fetchAppStoreAppInfo({
-          bundleId: app.bundleId,
-          client: appInfoClient,
-        });
+        const appStoreInfo = await appStoreService.fetchAppInfo(
+          app.bundleId,
+          appInfoClient
+        );
 
         // Check Play Store (when in both mode)
         let googlePlayInfo: RegisteredApp["googlePlay"] = undefined;
         if (playStoreEnabled) {
-          const playResult = await checkPlayStoreAccess(
-            app.bundleId,
-            config.playStore!
-          );
+          const playResult = await checkPlayStoreAccess(app.bundleId);
           if (playResult.accessible) {
             googlePlayInfo = {
               packageName: app.bundleId,
@@ -385,10 +364,7 @@ Provide packageName to verify and register that app:
     try {
       // Google Play 정보 가져오기 (언어 정보 포함)
       console.error(`[MCP]   🔍 Fetching Google Play app info...`);
-      const googlePlayInfo = await fetchGooglePlayAppInfo({
-        packageName,
-        config: config.playStore,
-      });
+      const googlePlayInfo = await googlePlayService.fetchAppInfo(packageName);
 
       if (!googlePlayInfo.found) {
         throw new Error("Failed to access Google Play app");

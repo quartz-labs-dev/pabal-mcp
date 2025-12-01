@@ -3,10 +3,10 @@ import { loadConfig, checkLatestVersions } from "@packages/common";
 import { findApp } from "@packages/utils";
 import { createAppStoreVersion } from "@packages/app-store/create-version";
 import { createGooglePlayVersion } from "@packages/play-store/create-version";
-import {
-  createAppStoreClient,
-  createGooglePlayClient,
-} from "@servers/mcp/core/clients";
+import { AppStoreService, GooglePlayService } from "@servers/mcp/core/services";
+
+const appStoreService = new AppStoreService();
+const googlePlayService = new GooglePlayService();
 
 interface AsoCreateVersionOptions {
   app?: string; // Registered app slug
@@ -106,7 +106,7 @@ export async function handleAsoCreateVersion(options: AsoCreateVersionOptions) {
     } else if (!bundleId) {
       results.push(`⏭️  Skipping App Store (no bundleId provided)`);
     } else {
-      const clientResult = createAppStoreClient({ bundleId });
+      const clientResult = appStoreService.createClient(bundleId);
 
       if (!clientResult.success) {
         results.push(
@@ -116,7 +116,7 @@ export async function handleAsoCreateVersion(options: AsoCreateVersionOptions) {
         try {
           console.error(`[MCP]   📦 Creating App Store version ${version}...`);
           const result = await createAppStoreVersion({
-            client: clientResult.client,
+            client: clientResult.data,
             versionString: version,
           });
           const state = result.version.attributes.appStoreState?.toUpperCase();
@@ -147,7 +147,7 @@ export async function handleAsoCreateVersion(options: AsoCreateVersionOptions) {
     } else if (!versionCodes || versionCodes.length === 0) {
       results.push(`⏭️  Skipping Google Play (no version codes provided)`);
     } else {
-      const clientResult = createGooglePlayClient({ packageName });
+      const clientResult = googlePlayService.createClient(packageName);
 
       if (!clientResult.success) {
         results.push(
@@ -159,7 +159,7 @@ export async function handleAsoCreateVersion(options: AsoCreateVersionOptions) {
             `[MCP]   📦 Creating Google Play production release ${version}...`
           );
           await createGooglePlayVersion({
-            client: clientResult.client,
+            client: clientResult.data,
             versionString: version,
             versionCodes,
           });

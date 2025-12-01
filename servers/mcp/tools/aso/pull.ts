@@ -1,7 +1,4 @@
-import {
-  createGooglePlayClient,
-  createAppStoreClient,
-} from "@servers/mcp/core/clients";
+import { AppStoreService, GooglePlayService } from "@servers/mcp/core/services";
 import {
   type AsoData,
   type StoreType,
@@ -21,6 +18,9 @@ import {
 } from "@packages/aso";
 import { getStoreTargets, loadConfig } from "@packages/common";
 import { findApp, updateAppSupportedLocales } from "@packages/utils";
+
+const appStoreService = new AppStoreService();
+const googlePlayService = new GooglePlayService();
 
 interface AsoPullOptions {
   app?: string; // Registered app slug
@@ -221,7 +221,7 @@ export async function handleAsoPull(options: AsoPullOptions) {
         `[MCP]   ⏭️  Skipping Google Play (no packageName provided)`
       );
     } else {
-      const clientResult = createGooglePlayClient({ packageName });
+      const clientResult = googlePlayService.createClient(packageName);
 
       if (!clientResult.success) {
         console.error(
@@ -230,7 +230,7 @@ export async function handleAsoPull(options: AsoPullOptions) {
       } else {
         try {
           console.error(`[MCP]   📥 Fetching from Google Play...`);
-          const data = await clientResult.client.pullAllLanguagesAsoData();
+          const data = await clientResult.data.pullAllLanguagesAsoData();
           syncedData.googlePlay = data;
           console.error(`[MCP]   ✅ Google Play data fetched`);
 
@@ -263,7 +263,7 @@ export async function handleAsoPull(options: AsoPullOptions) {
     } else if (!bundleId) {
       console.error(`[MCP]   ⏭️  Skipping App Store (no bundleId provided)`);
     } else {
-      const clientResult = createAppStoreClient({ bundleId });
+      const clientResult = appStoreService.createClient(bundleId);
 
       if (!clientResult.success) {
         console.error(
@@ -272,7 +272,7 @@ export async function handleAsoPull(options: AsoPullOptions) {
       } else {
         try {
           console.error(`[MCP]   📥 Fetching from App Store...`);
-          const data = await clientResult.client.pullAllLocalesAsoData();
+          const data = await clientResult.data.pullAllLocalesAsoData();
           syncedData.appStore = data;
           console.error(`[MCP]   ✅ App Store data fetched`);
 

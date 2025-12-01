@@ -11,12 +11,12 @@ import {
   separateTranslationsByStore,
   collectSupportedLocales,
 } from "@packages/utils/translate-release-notes";
-import {
-  fetchAppStoreAppInfo,
-  fetchGooglePlayAppInfo,
-} from "@packages/utils/app-info";
 import { updateAppStoreReleaseNotes } from "@packages/app-store/update-release-notes";
 import { updateGooglePlayReleaseNotes } from "@packages/play-store/update-release-notes";
+import { AppStoreService, GooglePlayService } from "@servers/mcp/core/services";
+
+const appStoreService = new AppStoreService();
+const googlePlayService = new GooglePlayService();
 
 interface UpdateNotesOptions {
   app?: string;
@@ -120,37 +120,17 @@ export async function handleUpdateNotes(options: UpdateNotesOptions) {
         appStoreLocales = existingAppStoreLocales;
       } else if (config.appStore) {
         // Fetch from App Store API
-        try {
-          const { createAppStoreClient } =
-            await import("@servers/mcp/core/clients");
-          const clientResult = createAppStoreClient({ bundleId });
+        const appInfo = await appStoreService.fetchAppInfo(bundleId);
 
-          if (!clientResult.success) {
-            throw new Error(
-              `Failed to create App Store client: ${clientResult.error}`
-            );
+        if (appInfo.found && appInfo.supportedLocales) {
+          appStoreLocales = appInfo.supportedLocales;
+          // Update registered app with fetched locales
+          if (registeredApp.appStore) {
+            registeredApp.appStore.supportedLocales = appInfo.supportedLocales;
           }
-
-          const client = clientResult.client;
-
-          const appInfo = await fetchAppStoreAppInfo({
-            bundleId,
-            client,
-          });
-
-          if (appInfo.found && appInfo.supportedLocales) {
-            appStoreLocales = appInfo.supportedLocales;
-            // Update registered app with fetched locales
-            if (registeredApp.appStore) {
-              registeredApp.appStore.supportedLocales =
-                appInfo.supportedLocales;
-            }
-          }
-        } catch (error) {
+        } else if (appInfo.error) {
           console.error(
-            `[MCP]   ⚠️ Failed to fetch App Store locales: ${
-              error instanceof Error ? error.message : String(error)
-            }`
+            `[MCP]   ⚠️ Failed to fetch App Store locales: ${appInfo.error}`
           );
         }
       }
@@ -161,25 +141,18 @@ export async function handleUpdateNotes(options: UpdateNotesOptions) {
         googlePlayLocales = existingGooglePlayLocales;
       } else if (config.playStore?.serviceAccountJson) {
         // Fetch from Google Play API
-        try {
-          const appInfo = await fetchGooglePlayAppInfo({
-            packageName,
-            config: config.playStore,
-          });
+        const appInfo = await googlePlayService.fetchAppInfo(packageName);
 
-          if (appInfo.found && appInfo.supportedLocales) {
-            googlePlayLocales = appInfo.supportedLocales;
-            // Update registered app with fetched locales
-            if (registeredApp.googlePlay) {
-              registeredApp.googlePlay.supportedLocales =
-                appInfo.supportedLocales;
-            }
+        if (appInfo.found && appInfo.supportedLocales) {
+          googlePlayLocales = appInfo.supportedLocales;
+          // Update registered app with fetched locales
+          if (registeredApp.googlePlay) {
+            registeredApp.googlePlay.supportedLocales =
+              appInfo.supportedLocales;
           }
-        } catch (error) {
+        } else if (appInfo.error) {
           console.error(
-            `[MCP]   ⚠️ Failed to fetch Google Play locales: ${
-              error instanceof Error ? error.message : String(error)
-            }`
+            `[MCP]   ⚠️ Failed to fetch Google Play locales: ${appInfo.error}`
           );
         }
       }
@@ -369,37 +342,17 @@ Note: Provide translations for ALL supported locales. Include the already provid
         appStoreLocales = existingAppStoreLocales;
       } else if (config.appStore) {
         // Fetch from App Store API
-        try {
-          const { createAppStoreClient } =
-            await import("@servers/mcp/core/clients");
-          const clientResult = createAppStoreClient({ bundleId });
+        const appInfo = await appStoreService.fetchAppInfo(bundleId);
 
-          if (!clientResult.success) {
-            throw new Error(
-              `Failed to create App Store client: ${clientResult.error}`
-            );
+        if (appInfo.found && appInfo.supportedLocales) {
+          appStoreLocales = appInfo.supportedLocales;
+          // Update registered app with fetched locales
+          if (registeredApp.appStore) {
+            registeredApp.appStore.supportedLocales = appInfo.supportedLocales;
           }
-
-          const client = clientResult.client;
-
-          const appInfo = await fetchAppStoreAppInfo({
-            bundleId,
-            client,
-          });
-
-          if (appInfo.found && appInfo.supportedLocales) {
-            appStoreLocales = appInfo.supportedLocales;
-            // Update registered app with fetched locales
-            if (registeredApp.appStore) {
-              registeredApp.appStore.supportedLocales =
-                appInfo.supportedLocales;
-            }
-          }
-        } catch (error) {
+        } else if (appInfo.error) {
           console.error(
-            `[MCP]   ⚠️ Failed to fetch App Store locales: ${
-              error instanceof Error ? error.message : String(error)
-            }`
+            `[MCP]   ⚠️ Failed to fetch App Store locales: ${appInfo.error}`
           );
         }
       }
@@ -410,25 +363,18 @@ Note: Provide translations for ALL supported locales. Include the already provid
         googlePlayLocales = existingGooglePlayLocales;
       } else if (config.playStore?.serviceAccountJson) {
         // Fetch from Google Play API
-        try {
-          const appInfo = await fetchGooglePlayAppInfo({
-            packageName,
-            config: config.playStore,
-          });
+        const appInfo = await googlePlayService.fetchAppInfo(packageName);
 
-          if (appInfo.found && appInfo.supportedLocales) {
-            googlePlayLocales = appInfo.supportedLocales;
-            // Update registered app with fetched locales
-            if (registeredApp.googlePlay) {
-              registeredApp.googlePlay.supportedLocales =
-                appInfo.supportedLocales;
-            }
+        if (appInfo.found && appInfo.supportedLocales) {
+          googlePlayLocales = appInfo.supportedLocales;
+          // Update registered app with fetched locales
+          if (registeredApp.googlePlay) {
+            registeredApp.googlePlay.supportedLocales =
+              appInfo.supportedLocales;
           }
-        } catch (error) {
+        } else if (appInfo.error) {
           console.error(
-            `[MCP]   ⚠️ Failed to fetch Google Play locales: ${
-              error instanceof Error ? error.message : String(error)
-            }`
+            `[MCP]   ⚠️ Failed to fetch Google Play locales: ${appInfo.error}`
           );
         }
       }
@@ -608,9 +554,7 @@ Note: App Store and Google Play may use different locale formats (e.g., "ko" vs 
       );
     } else {
       try {
-        const { createAppStoreClient } =
-          await import("@servers/mcp/core/clients");
-        const clientResult = createAppStoreClient({ bundleId });
+        const clientResult = appStoreService.createClient(bundleId);
 
         if (!clientResult.success) {
           throw new Error(
@@ -618,7 +562,7 @@ Note: App Store and Google Play may use different locale formats (e.g., "ko" vs 
           );
         }
 
-        const client = clientResult.client;
+        const client = clientResult.data;
 
         const updateResult = await updateAppStoreReleaseNotes({
           client,
@@ -656,9 +600,7 @@ Note: App Store and Google Play may use different locale formats (e.g., "ko" vs 
     } else {
       console.error(`[MCP]   📤 Updating Google Play release notes...`);
       try {
-        const { createGooglePlayClient } =
-          await import("@servers/mcp/core/clients");
-        const clientResult = createGooglePlayClient({ packageName });
+        const clientResult = googlePlayService.createClient(packageName);
 
         if (!clientResult.success) {
           throw new Error(
@@ -666,7 +608,7 @@ Note: App Store and Google Play may use different locale formats (e.g., "ko" vs 
           );
         }
 
-        const client = clientResult.client;
+        const client = clientResult.data;
 
         const updateResult = await updateGooglePlayReleaseNotes({
           client,

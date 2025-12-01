@@ -12,11 +12,11 @@ import { getStoreTargets, loadConfig } from "@packages/common";
 import { findApp } from "@packages/utils";
 import { pullAppStoreReleaseNotes } from "@packages/app-store/pull-release-notes";
 import { pullGooglePlayReleaseNotes } from "@packages/play-store/pull-release-notes";
-import {
-  createAppStoreClient,
-  createGooglePlayClient,
-} from "@servers/mcp/core/clients";
+import { AppStoreService, GooglePlayService } from "@servers/mcp/core/services";
 import { writeFileSync } from "node:fs";
+
+const appStoreService = new AppStoreService();
+const googlePlayService = new GooglePlayService();
 
 interface AsoPullReleaseNotesOptions {
   app?: string; // Registered app slug
@@ -106,7 +106,7 @@ export async function handleAsoPullReleaseNotes(
         `[MCP]   ⏭️  Skipping Google Play (no packageName provided)`
       );
     } else {
-      const clientResult = createGooglePlayClient({ packageName });
+      const clientResult = googlePlayService.createClient(packageName);
 
       if (!clientResult.success) {
         console.error(
@@ -118,7 +118,7 @@ export async function handleAsoPullReleaseNotes(
             `[MCP]   📥 Fetching release notes from Google Play...`
           );
           const result = await pullGooglePlayReleaseNotes({
-            client: clientResult.client,
+            client: clientResult.data,
           });
           releaseNotes.googlePlay = result.releaseNotes;
 
@@ -149,7 +149,7 @@ export async function handleAsoPullReleaseNotes(
     } else if (!bundleId) {
       console.error(`[MCP]   ⏭️  Skipping App Store (no bundleId provided)`);
     } else {
-      const clientResult = createAppStoreClient({ bundleId });
+      const clientResult = appStoreService.createClient(bundleId);
 
       if (!clientResult.success) {
         console.error(
@@ -159,7 +159,7 @@ export async function handleAsoPullReleaseNotes(
         try {
           console.error(`[MCP]   📥 Fetching release notes from App Store...`);
           const result = await pullAppStoreReleaseNotes({
-            client: clientResult.client,
+            client: clientResult.data,
           });
           releaseNotes.appStore = result.releaseNotes;
 

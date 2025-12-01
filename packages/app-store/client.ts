@@ -5,8 +5,6 @@
  * API Documentation: https://developer.apple.com/documentation/appstoreconnectapi
  */
 
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, basename } from "node:path";
 import { createAppStoreJWT } from "@packages/app-store/auth";
 import type {
   AppStoreAsoData,
