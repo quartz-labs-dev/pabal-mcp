@@ -1,3 +1,5 @@
+import type { RegisteredApp } from "@packages/utils/registered-apps";
+
 export type ServiceResult<T> =
   | { success: true; data: T }
   | { success: false; error: string };
@@ -30,13 +32,13 @@ export interface CreatedAppStoreVersion {
   id: string;
   versionString: string;
   state?: string;
-  releaseType?: string;
 }
 
-export interface CreatedGooglePlayRelease {
+export interface CreatedGooglePlayVersion {
   versionName: string;
   versionCodes: number[];
   status: string;
+  releaseName?: string;
 }
 
 export interface UpdatedReleaseNotesResult {
@@ -66,16 +68,10 @@ export type PushAsoResult =
       };
     };
 
-export interface CreatedAppStoreVersion {
-  id: string;
-  versionString: string;
-  state?: string;
-}
-
-export interface CreatedGooglePlayVersion {
-  versionName: string;
-  versionCodes: number[];
-  status: string;
+export interface VerifyAuthResult<TPayload = Record<string, unknown>> {
+  success: boolean;
+  error?: string;
+  data?: TPayload;
 }
 
 export interface ResolvedAppContext {
@@ -86,4 +82,3 @@ export interface ResolvedAppContext {
   hasAppStore: boolean;
   hasGooglePlay: boolean;
 }
-import type { RegisteredApp } from "@packages/utils/registered-apps";

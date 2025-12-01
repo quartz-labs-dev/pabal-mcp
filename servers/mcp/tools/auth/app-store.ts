@@ -1,10 +1,12 @@
-import { verifyAppStoreAuth } from "@packages/app-store";
+import { AppStoreService } from "@servers/mcp/core/services";
+
+const appStoreService = new AppStoreService();
 
 /**
  * App Store authentication status check tool
  */
 export async function handleAuthAppStore() {
-  const result = await verifyAppStoreAuth({ expirationSeconds: 300 });
+  const result = await appStoreService.verifyAuth(300);
   if (result.success && result.data) {
     return {
       content: [

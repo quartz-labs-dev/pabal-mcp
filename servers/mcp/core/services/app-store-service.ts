@@ -6,6 +6,7 @@ import type {
 } from "@packages/aso/types";
 import type { PreparedAsoData } from "@packages/aso/utils";
 import type { EnvConfig } from "@packages/common/config";
+import { verifyAppStoreAuth } from "@packages/app-store/verify-auth";
 import {
   checkPushPrerequisites,
   toErrorMessage,
@@ -20,6 +21,7 @@ import {
   type UpdatedReleaseNotesResult,
   type PushAsoResult,
   type CreatedAppStoreVersion,
+  type VerifyAuthResult,
 } from "./types";
 
 interface AppStoreAppInfo {
@@ -330,5 +332,14 @@ export class AppStoreService {
       console.error(`[AppStore]   ❌ Push failed`, error);
       return { success: false, error: msg };
     }
+  }
+
+  async verifyAuth(expirationSeconds = 300): Promise<
+    VerifyAuthResult<{
+      header: Record<string, unknown>;
+      payload: Record<string, unknown>;
+    }>
+  > {
+    return verifyAppStoreAuth({ expirationSeconds });
   }
 }

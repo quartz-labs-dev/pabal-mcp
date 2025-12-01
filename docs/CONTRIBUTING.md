@@ -31,6 +31,47 @@ This project runs as an MCP server for App Store / Play Store ASO workflows. Use
 - Start the MCP server with `npm run dev:mcp` from the project root (stdio server).
 - When connecting from an MCP client, call `run-mcp.sh` so paths resolve correctly. Set `dataDir` in `secrets/aso-config.json` or pass `PABAL_MCP_DATA_DIR` environment variable if needed.
 
+## Architecture
+
+```
+ CLI / MCP client
+        │
+        ▼
+   tools (servers/mcp/tools)
+     - MCP entrypoints
+     - parse input, call workflows/services, format output
+        │
+        ▼
+   workflows (servers/mcp/core/workflows)
+     - optional orchestration across multiple services
+     - message aggregation/flow control
+        │
+        ▼
+   services (servers/mcp/core/services) ◀────────────── helpers
+     - domain logic, client creation, validation,        (servers/mcp/core/helpers)
+       error formatting                                  pure utilities (formatters, shared)
+        │                                                no deps on workflows/services
+        ▼
+   clients/SDK (packages/*/client, API modules)
+     - raw API calls, request/response types
+        │
+        ▼
+   External APIs (App Store Connect / Google Play)
+```
+
+- `packages/*`: SDK layer only. Holds API clients, request/response types, and low-level helpers. Do not put domain logic or error formatting here.
+- `services` (`servers/mcp/core/services/*`): Domain layer. Creates clients, validates inputs, calls SDKs, and returns data in `ServiceResult`/`MaybeResult` shapes. Uses shared helpers (`service-helpers`, `client-factory-helpers`).
+- `workflows` (`servers/mcp/core/workflows/*`): Optional orchestration (e.g., version-info) that combines multiple services and formats messages. Keep services data-only; do formatting here or in tool-level helpers.
+- `helpers` (`servers/mcp/core/helpers/*`): Formatting utilities (`formatters`), shared pure functions.
+- `tools` (`servers/mcp/tools/*`): MCP tool entrypoints. Parse user input, call services/workflows, format output. No direct SDK/client usage.
+- `tests`: Unit tests for clients/services/workflows.
+
+Rules:
+
+- Services must use `toServiceResult`/`toErrorMessage`/`serviceSuccess`/`serviceFailure`; avoid manual `{ success: false }`.
+- Tools must not create clients or import SDKs directly; go through services/workflows.
+- Keep message formatting out of services; use helper/workflow layer.
+
 ## Tool reference (current)
 
 - Authentication

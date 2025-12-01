@@ -5,7 +5,7 @@ import {
   AppStoreService,
   GooglePlayService,
 } from "@servers/mcp/core/services";
-import { getLatestVersions } from "./version-info";
+import { getLatestVersions } from "@servers/mcp/core/workflows/version-info";
 
 const appStoreService = new AppStoreService();
 const googlePlayService = new GooglePlayService();

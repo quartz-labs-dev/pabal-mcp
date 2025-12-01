@@ -14,9 +14,11 @@ import {
   type UpdatedReleaseNotesResult,
   type PushAsoResult,
   type CreatedGooglePlayVersion,
+  type VerifyAuthResult,
 } from "./types";
 import { toErrorMessage, toServiceResult } from "./service-helpers";
 import type { GooglePlayReleaseNote } from "@packages/aso/types";
+import { verifyPlayStoreAuth } from "@packages/play-store/verify-auth";
 
 interface GooglePlayAppInfo {
   name?: string;
@@ -232,5 +234,11 @@ export class GooglePlayService {
       console.error(`[GooglePlay] ❌ Push failed: ${msg}`, error);
       return { success: false, error: msg };
     }
+  }
+
+  async verifyAuth(): Promise<
+    VerifyAuthResult<{ client_email: string; project_id: string }>
+  > {
+    return verifyPlayStoreAuth();
   }
 }

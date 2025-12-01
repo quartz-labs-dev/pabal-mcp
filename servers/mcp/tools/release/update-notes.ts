@@ -16,6 +16,7 @@ import {
   AppStoreService,
   GooglePlayService,
 } from "@servers/mcp/core/services";
+import { formatReleaseNotesUpdate } from "@servers/mcp/core/helpers/formatters";
 
 const appStoreService = new AppStoreService();
 const googlePlayService = new GooglePlayService();
@@ -556,14 +557,9 @@ Note: App Store and Google Play may use different locale formats (e.g., "ko" vs 
         console.error(
           `[MCP]     ✅ Updated ${updateResult.data.updated.length} locales`
         );
-        for (const locale of updateResult.data.updated) {
-          appStoreResults.push(`✅ ${locale}`);
-          console.error(`[MCP]       ✅ ${locale}`);
-        }
-        for (const fail of updateResult.data.failed) {
-          appStoreResults.push(`❌ ${fail.locale}: ${fail.error}`);
-          console.error(`[MCP]       ❌ ${fail.locale}: ${fail.error}`);
-        }
+        appStoreResults.push(
+          ...formatReleaseNotesUpdate("App Store", updateResult.data)
+        );
       }
     }
   }
@@ -593,14 +589,9 @@ Note: App Store and Google Play may use different locale formats (e.g., "ko" vs 
         console.error(
           `[MCP]     ✅ Updated ${updateResult.data.updated.length} locales`
         );
-        for (const locale of updateResult.data.updated) {
-          googlePlayResults.push(`✅ ${locale}`);
-          console.error(`[MCP]       ✅ ${locale}`);
-        }
-        for (const fail of updateResult.data.failed) {
-          googlePlayResults.push(`❌ ${fail.locale}: ${fail.error}`);
-          console.error(`[MCP]       ❌ ${fail.locale}: ${fail.error}`);
-        }
+        googlePlayResults.push(
+          ...formatReleaseNotesUpdate("Google Play", updateResult.data)
+        );
       }
     }
   }

@@ -16,6 +16,7 @@ import {
   AppStoreService,
   GooglePlayService,
 } from "@servers/mcp/core/services";
+import { formatPushResult } from "@servers/mcp/core/helpers/formatters";
 
 const appResolutionService = new AppResolutionService();
 const appStoreService = new AppStoreService();
@@ -195,37 +196,6 @@ export async function handleAsoPush(options: AsoPushOptions) {
   }
 
   const results: string[] = [];
-
-  const formatPushResult = (
-    storeLabel: "App Store" | "Google Play",
-    result: import("@servers/mcp/core/services/types").PushAsoResult
-  ): string => {
-    if (!result.success) {
-      if (result.needsNewVersion && result.versionInfo) {
-        const { versionString, versionId } = result.versionInfo;
-        return `✅ New version ${versionString} created (Version ID: ${versionId})`;
-      }
-      return `❌ ${storeLabel} push failed: ${result.error}`;
-    }
-
-    if (result.failedFields && result.failedFields.length > 0) {
-      const fieldDisplayNames: Record<string, string> = {
-        name: "Name",
-        subtitle: "Subtitle",
-      };
-      const failedText = result.failedFields
-        .map((f) => {
-          const fieldNames = f.fields.map(
-            (field) => fieldDisplayNames[field] || field
-          );
-          return `   • ${f.locale}: ${fieldNames.join(", ")}`;
-        })
-        .join("\n");
-      return `⚠️  ${storeLabel} data pushed with partial failures (${result.localesPushed.length} locales)\n${failedText}`;
-    }
-
-    return `✅ ${storeLabel} data pushed (${result.localesPushed.length} locales)`;
-  };
 
   // Push to Google Play
   if (store === "googlePlay" || store === "both") {

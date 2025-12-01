@@ -2,9 +2,11 @@
  * auth-check: Check App Store / Google Play authentication status
  */
 
-import { verifyAppStoreAuth } from "@packages/app-store";
-import { verifyPlayStoreAuth } from "@packages/play-store";
 import { getStoreTargets, type StoreType } from "@packages/common";
+import { AppStoreService, GooglePlayService } from "@servers/mcp/core/services";
+
+const appStoreService = new AppStoreService();
+const googlePlayService = new GooglePlayService();
 
 interface AuthCheckOptions {
   store?: StoreType;
@@ -23,7 +25,7 @@ export async function handleAuthCheck(options: AuthCheckOptions) {
 
   if (includeAppStore) {
     console.error(`[MCP]   Checking App Store Connect...`);
-    const appStoreResult = await verifyAppStoreAuth({ expirationSeconds: 300 });
+    const appStoreResult = await appStoreService.verifyAuth(300);
     if (appStoreResult.success && appStoreResult.data) {
       results.push(`✅ **App Store Connect**`);
       results.push(`   Issuer ID: ${appStoreResult.data.payload.iss}`);
@@ -38,7 +40,7 @@ export async function handleAuthCheck(options: AuthCheckOptions) {
 
   if (includeGooglePlay) {
     console.error(`[MCP]   Checking Google Play Console...`);
-    const playStoreResult = verifyPlayStoreAuth();
+    const playStoreResult = await googlePlayService.verifyAuth();
     if (playStoreResult.success && playStoreResult.data) {
       results.push(`✅ **Google Play Console**`);
       results.push(`   Project: ${playStoreResult.data.project_id}`);

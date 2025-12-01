@@ -1,10 +1,12 @@
-import { verifyPlayStoreAuth } from "@packages/play-store";
+import { GooglePlayService } from "@servers/mcp/core/services";
+
+const googlePlayService = new GooglePlayService();
 
 /**
  * Google Play authentication status check tool
  */
 export async function handleAuthPlayStore() {
-  const result = verifyPlayStoreAuth();
+  const result = await googlePlayService.verifyAuth();
   if (result.success && result.data) {
     return {
       content: [
