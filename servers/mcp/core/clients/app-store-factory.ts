@@ -1,12 +1,17 @@
 import { AppStoreClient } from "@packages/app-store/client";
 import { loadConfig } from "@packages/common/config";
+import {
+  failure,
+  isNonEmptyString,
+  success,
+  toErrorMessage,
+} from "./client-factory-helpers";
+import type { ClientFactoryResult } from "./types";
 
 /**
  * Result type for App Store client creation
  */
-export type AppStoreClientResult =
-  | { success: true; client: AppStoreClient }
-  | { success: false; error: string };
+export type AppStoreClientResult = ClientFactoryResult<AppStoreClient>;
 
 /**
  * Configuration for App Store client creation
@@ -36,19 +41,13 @@ export function createAppStoreClient(
 ): AppStoreClientResult {
   // Validate input
   if (!config) {
-    return {
-      success: false,
-      error: "App Store client configuration is missing",
-    };
+    return failure("App Store client configuration is missing");
   }
 
   const { bundleId } = config;
 
-  if (!bundleId || typeof bundleId !== "string" || !bundleId.trim()) {
-    return {
-      success: false,
-      error: "Bundle ID is required and must be a non-empty string",
-    };
+  if (!isNonEmptyString(bundleId)) {
+    return failure("Bundle ID is required and must be a non-empty string");
   }
 
   // Load fresh config (stateless - works from any directory)
@@ -57,51 +56,35 @@ export function createAppStoreClient(
     const fullConfig = loadConfig();
     appStoreConfig = fullConfig.appStore;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return {
-      success: false,
-      error: `Failed to load App Store configuration: ${message}`,
-    };
+    return failure(
+      `Failed to load App Store configuration: ${toErrorMessage(error)}`
+    );
   }
 
   // Validate required credentials
   if (!appStoreConfig) {
-    return {
-      success: false,
-      error: "App Store configuration is missing in config file",
-    };
+    return failure("App Store configuration is missing in config file");
   }
 
   const { issuerId, keyId, privateKey } = appStoreConfig;
 
-  if (!issuerId || typeof issuerId !== "string" || !issuerId.trim()) {
-    return {
-      success: false,
-      error: "App Store Issuer ID is required in configuration",
-    };
+  if (!isNonEmptyString(issuerId)) {
+    return failure("App Store Issuer ID is required in configuration");
   }
 
-  if (!keyId || typeof keyId !== "string" || !keyId.trim()) {
-    return {
-      success: false,
-      error: "App Store Key ID is required in configuration",
-    };
+  if (!isNonEmptyString(keyId)) {
+    return failure("App Store Key ID is required in configuration");
   }
 
-  if (!privateKey || typeof privateKey !== "string" || !privateKey.trim()) {
-    return {
-      success: false,
-      error: "App Store Private Key is required in configuration",
-    };
+  if (!isNonEmptyString(privateKey)) {
+    return failure("App Store Private Key is required in configuration");
   }
 
   // Validate private key format
   if (!privateKey.includes("BEGIN PRIVATE KEY")) {
-    return {
-      success: false,
-      error:
-        "Invalid Private Key format. PEM format private key is required (must contain 'BEGIN PRIVATE KEY')",
-    };
+    return failure(
+      "Invalid Private Key format. PEM format private key is required (must contain 'BEGIN PRIVATE KEY')"
+    );
   }
 
   // Create client
@@ -113,15 +96,10 @@ export function createAppStoreClient(
       privateKey,
     });
 
-    return {
-      success: true,
-      client,
-    };
+    return success(client);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return {
-      success: false,
-      error: `Failed to create App Store client: ${message}`,
-    };
+    return failure(
+      `Failed to create App Store client: ${toErrorMessage(error)}`
+    );
   }
 }

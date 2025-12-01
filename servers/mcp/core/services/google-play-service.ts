@@ -1,14 +1,11 @@
 import { createGooglePlayClient } from "@servers/mcp/core/clients";
 import type { GooglePlayClient } from "@packages/play-store/client";
 import { type MaybeResult, type ServiceResult } from "./types";
+import { toErrorMessage, toServiceResult } from "./service-helpers";
 
 interface GooglePlayAppInfo {
   name?: string;
   supportedLocales?: string[];
-}
-
-function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 /**
@@ -17,11 +14,7 @@ function toErrorMessage(error: unknown): string {
  */
 export class GooglePlayService {
   createClient(packageName: string): ServiceResult<GooglePlayClient> {
-    const result = createGooglePlayClient({ packageName });
-    if (!result.success) {
-      return { success: false, error: result.error };
-    }
-    return { success: true, data: result.client };
+    return toServiceResult(createGooglePlayClient({ packageName }));
   }
 
   /**

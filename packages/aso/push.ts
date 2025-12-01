@@ -2,15 +2,15 @@ import {
   type AppStoreMultilingualAsoData,
   type GooglePlayMultilingualAsoData,
 } from "./types";
-import { prepareAsoDataForPush, type PreparedAsoData } from "./utils";
+import { type PreparedAsoData } from "./utils";
 import { pushAppStoreAso } from "@packages/app-store";
 import { pushGooglePlayAso } from "@packages/play-store";
-import {
-  createAppStoreClient,
-  createGooglePlayClient,
-} from "@servers/mcp/core/clients";
+import { AppStoreService, GooglePlayService } from "@servers/mcp/core/services";
 import type { EnvConfig } from "@packages/common/config";
 import { findApp, updateAppSupportedLocales } from "@packages/utils";
+
+const appStoreService = new AppStoreService();
+const googlePlayService = new GooglePlayService();
 
 export async function pushToGooglePlay({
   config,
@@ -39,7 +39,7 @@ export async function pushToGooglePlay({
     return `⏭️  Skipping Google Play (no data found)`;
   }
 
-  const clientResult = createGooglePlayClient({ packageName });
+  const clientResult = googlePlayService.createClient(packageName);
 
   if (!clientResult.success) {
     return `❌ Google Play push failed: ${clientResult.error}`;
@@ -53,7 +53,7 @@ export async function pushToGooglePlay({
   console.error(`[MCP]     Package: ${packageName}`);
 
   const result = await pushGooglePlayAso({
-    client: clientResult.client,
+    client: clientResult.data,
     asoData: googlePlayData,
   });
 
@@ -108,7 +108,7 @@ export async function pushToAppStore({
     return `⏭️  Skipping App Store (no data found)`;
   }
 
-  const clientResult = createAppStoreClient({ bundleId });
+  const clientResult = appStoreService.createClient(bundleId);
 
   if (!clientResult.success) {
     return `❌ App Store push failed: ${clientResult.error}`;
@@ -121,7 +121,7 @@ export async function pushToAppStore({
   console.error(`[MCP]     Bundle ID: ${bundleId}`);
 
   const result = await pushAppStoreAso({
-    client: clientResult.client,
+    client: clientResult.data,
     asoData: appStoreData,
   });
 

@@ -5,15 +5,12 @@ import {
   type ServiceResult,
   type StoreAppSummary,
 } from "./types";
+import { toErrorMessage, toServiceResult } from "./service-helpers";
 
 interface AppStoreAppInfo {
   appId?: string;
   name?: string;
   supportedLocales?: string[];
-}
-
-function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 /**
@@ -22,11 +19,7 @@ function toErrorMessage(error: unknown): string {
  */
 export class AppStoreService {
   createClient(bundleId: string): ServiceResult<AppStoreClient> {
-    const result = createAppStoreClient({ bundleId });
-    if (!result.success) {
-      return { success: false, error: result.error };
-    }
-    return { success: true, data: result.client };
+    return toServiceResult(createAppStoreClient({ bundleId }));
   }
 
   /**

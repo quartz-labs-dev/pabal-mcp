@@ -9,3 +9,5 @@ export {
   type GooglePlayClientConfig,
   type GooglePlayClientResult,
 } from "./google-play-factory";
+
+export type { ClientFactoryResult } from "./types";
