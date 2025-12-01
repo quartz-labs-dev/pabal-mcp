@@ -83,9 +83,7 @@ export async function pushToAppStore({
   bundleId?: string;
   localAsoData: PreparedAsoData;
   appStoreDataPath: string;
-}): Promise<
-  string | { content: Array<{ type: "text"; text: string }>; _meta?: any }
-> {
+}): Promise<string> {
   if (!config.appStore) {
     return `⏭️  Skipping App Store (not configured in secrets/aso-config.json)`;
   }
@@ -150,7 +148,7 @@ ${result.failedFields
     const fieldNames = f.fields.map(
       (field) => fieldDisplayNames[field] || field
     );
-    return `   • ${f.locale}: ${fieldNames.join(", ")} - Cannot be updated in current app state (requires new version)`;
+    return `   • ${f.locale}: ${fieldNames.join(", ")} - Cannot be updated in current app state (requires new version). Previously, you needed to update these manually in App Store Connect console.`;
   })
   .join("\n")}
 
@@ -164,44 +162,8 @@ ${result.failedFields
   }
 
   if (result.needsNewVersion && result.versionInfo) {
-    const { versionId, versionString, locales } = result.versionInfo;
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: `🔄 New version required for App Store.
-
-✅ New version ${versionString} created (Version ID: ${versionId})
-
-📝 **What's New translation required**
-
-Please translate What's New text for the following locales:
-${locales.join(", ")}
-
-After translation is complete, call the \`aso-update-whats-new\` tool:
-\`\`\`json
-{
-  "bundleId": "${bundleId}",
-  "versionId": "${versionId}",
-  "whatsNew": {
-    "en-US": "Bug fixes and improvements",
-    "ko-KR": "버그 수정 및 개선사항",
-    ...
-  }
-}
-\`\`\`
-
-After updating What's New, call \`aso-push\` again to push ASO data.`,
-        },
-      ],
-      _meta: {
-        needsTranslation: true,
-        versionId,
-        versionString,
-        bundleId,
-        locales,
-      },
-    };
+    const { versionId, versionString } = result.versionInfo;
+    return `✅ New version ${versionString} created (Version ID: ${versionId})`;
   }
 
   return `❌ App Store push failed: ${result.error}`;
