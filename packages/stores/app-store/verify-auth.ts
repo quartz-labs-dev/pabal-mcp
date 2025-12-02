@@ -1,5 +1,5 @@
-import { loadConfig } from "@packages/secrets-config/config";
-import { createAppStoreJWT, decodeJwt } from "@packages/app-store/auth";
+import { loadConfig } from "@/packages/configs/secrets-config/config";
+import { createAppStoreJWT, decodeJwt } from "@/packages/stores/app-store/auth";
 
 export interface VerifyAppStoreAuthResult {
   success: boolean;

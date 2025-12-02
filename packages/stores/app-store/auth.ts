@@ -1,5 +1,5 @@
 import { SignJWT, importPKCS8 } from "jose";
-import type { AppStoreConfig } from "@packages/secrets-config/config";
+import type { AppStoreConfig } from "@/packages/configs/secrets-config/types";
 
 type JwtOptions = {
   now?: number; // seconds

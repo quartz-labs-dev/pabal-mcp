@@ -1,5 +1,5 @@
-import { AppStoreClient } from "@packages/app-store/client";
-import { loadConfig } from "@packages/secrets-config/config";
+import { AppStoreClient } from "@/packages/stores/app-store/client";
+import { loadConfig } from "@/packages/configs/secrets-config/config";
 import {
   failure,
   isNonEmptyString,

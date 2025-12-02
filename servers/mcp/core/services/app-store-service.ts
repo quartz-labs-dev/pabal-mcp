@@ -1,12 +1,12 @@
 import { createAppStoreClient } from "@servers/mcp/core/clients";
-import type { AppStoreClient } from "@packages/app-store/client";
+import type { AppStoreClient } from "@/packages/stores/app-store/client";
 import type {
   AppStoreMultilingualAsoData,
   AppStoreReleaseNote,
-} from "@/packages/aso-config/types";
-import type { PreparedAsoData } from "@/packages/aso-config/utils";
-import type { EnvConfig } from "@packages/secrets-config/config";
-import { verifyAppStoreAuth } from "@packages/app-store/verify-auth";
+} from "@/packages/configs/aso-config/types";
+import type { PreparedAsoData } from "@/packages/configs/aso-config/utils";
+import type { EnvConfig } from "@/packages/configs/secrets-config/types";
+import { verifyAppStoreAuth } from "@/packages/stores/app-store/verify-auth";
 import {
   checkPushPrerequisites,
   toErrorMessage,

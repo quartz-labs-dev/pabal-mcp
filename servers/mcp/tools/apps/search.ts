@@ -10,7 +10,7 @@ import {
   loadRegisteredApps,
   findApp,
   type RegisteredApp,
-} from "@/packages/secrets-config/registered-apps";
+} from "@/packages/configs/secrets-config/registered-apps";
 
 interface SearchAppsOptions {
   /** Search term (slug, bundleId, packageName, name). Returns all apps if empty */

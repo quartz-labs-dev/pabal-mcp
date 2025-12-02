@@ -1,4 +1,4 @@
-import { findApp } from "@/packages/secrets-config/registered-apps";
+import { findApp } from "@/packages/configs/secrets-config/registered-apps";
 import {
   serviceFailure,
   serviceSuccess,

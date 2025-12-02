@@ -10,22 +10,6 @@ export type GooglePlayLanguage =
 export type SupportedLocale = AppStoreLocale | GooglePlayLanguage;
 
 // ============================================================================
-// Type Guards
-// ============================================================================
-
-export function isAppStoreLocale(locale: string): locale is AppStoreLocale {
-  return APP_STORE_SUPPORTED_LOCALES.includes(locale as AppStoreLocale);
-}
-
-export function isGooglePlayLanguage(
-  language: string
-): language is GooglePlayLanguage {
-  return GOOGLE_PLAY_SUPPORTED_LANGUAGES.includes(
-    language as GooglePlayLanguage
-  );
-}
-
-// ============================================================================
 // Google Play ASO Types
 // ============================================================================
 

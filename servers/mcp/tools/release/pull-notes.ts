@@ -2,16 +2,16 @@ import type {
   StoreType,
   GooglePlayReleaseNote,
   AppStoreReleaseNote,
-} from "@/packages/aso-config/types";
+} from "@/packages/configs/aso-config/types";
 import {
   ensureDir,
   getAsoPullDir,
   getPullProductAsoDir,
   getStoreDir,
   getReleaseNotesPath,
-} from "@/packages/aso-config/utils";
-import { getStoreTargets } from "@packages/aso-config/store";
-import { loadConfig } from "@packages/secrets-config/config";
+} from "@/packages/configs/aso-config/utils";
+import { getStoreTargets } from "@/packages/configs/aso-config/store";
+import { loadConfig } from "@/packages/configs/secrets-config/config";
 import {
   AppResolutionService,
   AppStoreService,

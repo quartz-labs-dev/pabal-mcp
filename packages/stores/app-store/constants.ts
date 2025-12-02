@@ -1,4 +1,16 @@
-import type { AppStoreScreenshots } from "@packages/aso-config/types";
+/**
+ * App Store Connect Constants
+ *
+ * Constant values for App Store operations
+ */
+
+import type { AppStoreScreenshots } from "@/packages/configs/aso-config/types";
+
+export const APP_STORE_API_BASE_URL =
+  "https://api.appstoreconnect.apple.com/v1";
+export const APP_STORE_PLATFORM = "IOS";
+export const DEFAULT_APP_LIST_LIMIT = 200;
+export const DEFAULT_VERSIONS_FETCH_LIMIT = 10;
 
 export const SCREENSHOT_TYPE_MAP: Record<string, keyof AppStoreScreenshots> = {
   IPHONE_65: "iphone65",

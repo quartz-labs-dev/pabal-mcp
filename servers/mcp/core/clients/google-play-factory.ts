@@ -1,5 +1,5 @@
-import { GooglePlayClient } from "@packages/play-store/client";
-import { loadConfig } from "@packages/secrets-config/config";
+import { GooglePlayClient } from "@packages/stores/play-store/client";
+import { loadConfig } from "@/packages/configs/secrets-config/config";
 import {
   failure,
   isNonEmptyString,

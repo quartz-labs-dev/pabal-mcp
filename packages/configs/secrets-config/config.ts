@@ -1,10 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { z } from "zod";
 import { ConfigError } from "./errors";
-
-export const DATA_DIR_ENV_KEY = "PABAL_MCP_DATA_DIR";
+import { DATA_DIR_ENV_KEY } from "./constants";
+import { appStoreSchema, playStoreSchema } from "./schemas";
+import type { EnvConfig } from "./types";
 
 // From packages/secrets-config/config.ts, go up 2 levels to reach project root
 export const getProjectRoot = (): string => {
@@ -77,24 +77,6 @@ export function getDataDir(): string {
   console.error(`[Config]   ✅ Using default (project root): ${projectRoot}`);
   return projectRoot;
 }
-
-const appStoreSchema = z.object({
-  keyId: z.string().min(1),
-  issuerId: z.string().min(1),
-  privateKey: z.string().min(1), // PEM format string
-});
-
-const playStoreSchema = z.object({
-  serviceAccountJson: z.string().min(1), // JSON string
-});
-
-export type AppStoreConfig = z.infer<typeof appStoreSchema>;
-export type PlayStoreConfig = z.infer<typeof playStoreSchema>;
-
-export type EnvConfig = {
-  appStore?: AppStoreConfig;
-  playStore?: PlayStoreConfig;
-};
 
 export function loadConfig(): EnvConfig {
   const projectRoot = getProjectRoot();

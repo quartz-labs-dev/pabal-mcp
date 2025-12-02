@@ -1,4 +1,4 @@
-import { loadConfig } from "@packages/secrets-config/config";
+import { loadConfig } from "@/packages/configs/secrets-config/config";
 
 export interface VerifyPlayStoreAuthResult {
   success: boolean;

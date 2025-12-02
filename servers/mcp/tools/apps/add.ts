@@ -2,14 +2,14 @@
  * add-app: Register app by bundleId or packageName
  */
 
-import { loadConfig } from "@packages/secrets-config/config";
+import { loadConfig } from "@/packages/configs/secrets-config/config";
 import {
   registerApp,
   findApp,
   loadRegisteredApps,
   saveRegisteredApps,
   type RegisteredApp,
-} from "@/packages/secrets-config/registered-apps";
+} from "@/packages/configs/secrets-config/registered-apps";
 import {
   toRegisteredAppStoreInfo,
   toRegisteredGooglePlayInfo,

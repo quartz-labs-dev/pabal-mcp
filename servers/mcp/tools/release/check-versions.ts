@@ -1,5 +1,5 @@
-import { getStoreTargets } from "@packages/aso-config/store";
-import { type StoreType } from "@packages/aso-config/types";
+import { getStoreTargets } from "@/packages/configs/aso-config/store";
+import { type StoreType } from "@/packages/configs/aso-config/types";
 import { AppResolutionService } from "@servers/mcp/core/services";
 import { getLatestVersions } from "@servers/mcp/core/workflows/version-info";
 

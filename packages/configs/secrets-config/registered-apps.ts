@@ -5,7 +5,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { getProjectRoot } from "@packages/secrets-config/config";
+import { getProjectRoot } from "@/packages/configs/secrets-config/config";
 
 // ============================================================================
 // Type Definitions

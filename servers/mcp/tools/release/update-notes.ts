@@ -5,7 +5,7 @@
  * Automatically translates to all supported languages if text is provided.
  */
 
-import { type StoreType } from "@packages/aso-config/types";
+import { type StoreType } from "@/packages/configs/aso-config/types";
 import {
   createTranslationRequests,
   separateTranslationsByStore,
@@ -44,7 +44,8 @@ export async function handleUpdateNotes(options: UpdateNotesOptions) {
   } = options;
   let { bundleId, packageName } = options;
 
-  const { loadConfig } = await import("@packages/secrets-config/config");
+  const { loadConfig } =
+    await import("@/packages/configs/secrets-config/config");
 
   const resolved = appResolutionService.resolve({
     slug: app,

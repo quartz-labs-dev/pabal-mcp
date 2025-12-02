@@ -1,0 +1,1 @@
+export const DATA_DIR_ENV_KEY = "PABAL_MCP_DATA_DIR";

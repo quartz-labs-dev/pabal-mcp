@@ -3,8 +3,8 @@
  * Prepares translation requests per store and gathers supported locales from registered apps.
  */
 
-import type { RegisteredApp } from "@/packages/secrets-config/registered-apps";
-import type { StoreType } from "@packages/aso-config/types";
+import type { RegisteredApp } from "@/packages/configs/secrets-config/registered-apps";
+import type { StoreType } from "@/packages/configs/aso-config/types";
 
 export interface TranslationRequest {
   sourceText: string;

@@ -5,7 +5,7 @@ import {
   createTranslationRequests,
   separateTranslationsByStore,
 } from "@servers/mcp/core/helpers/translate-release-notes";
-import type { RegisteredApp } from "@/packages/secrets-config/registered-apps";
+import type { RegisteredApp } from "@/packages/configs/secrets-config/registered-apps";
 
 describe("translate-release-notes", () => {
   describe("collectSupportedLocales", () => {

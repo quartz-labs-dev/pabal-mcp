@@ -1,8 +1,8 @@
 import { createGooglePlayClient } from "@servers/mcp/core/clients";
-import type { GooglePlayClient } from "@packages/play-store/client";
-import type { GooglePlayMultilingualAsoData } from "@/packages/aso-config/types";
-import type { PreparedAsoData } from "@/packages/aso-config/utils";
-import type { EnvConfig } from "@packages/secrets-config/config";
+import type { GooglePlayClient } from "@packages/stores/play-store/client";
+import type { GooglePlayMultilingualAsoData } from "@/packages/configs/aso-config/types";
+import type { PreparedAsoData } from "@/packages/configs/aso-config/utils";
+import type { EnvConfig } from "@/packages/configs/secrets-config/types";
 import {
   checkPushPrerequisites,
   updateRegisteredLocales,
@@ -17,8 +17,8 @@ import {
   type VerifyAuthResult,
 } from "./types";
 import { toErrorMessage, toServiceResult } from "./service-helpers";
-import type { GooglePlayReleaseNote } from "@/packages/aso-config/types";
-import { verifyPlayStoreAuth } from "@packages/play-store/verify-auth";
+import type { GooglePlayReleaseNote } from "@/packages/configs/aso-config/types";
+import { verifyPlayStoreAuth } from "@packages/stores/play-store/verify-auth";
 
 interface GooglePlayAppInfo {
   name?: string;

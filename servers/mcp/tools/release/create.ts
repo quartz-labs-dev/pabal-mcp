@@ -1,5 +1,5 @@
-import { type StoreType } from "@packages/aso-config/types";
-import { loadConfig } from "@packages/secrets-config/config";
+import { type StoreType } from "@/packages/configs/aso-config/types";
+import { loadConfig } from "@/packages/configs/secrets-config/config";
 import {
   AppResolutionService,
   AppStoreService,

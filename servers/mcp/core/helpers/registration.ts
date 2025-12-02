@@ -1,7 +1,7 @@
 import type {
   RegisteredAppStoreInfo,
   RegisteredGooglePlayInfo,
-} from "@/packages/secrets-config/registered-apps";
+} from "@/packages/configs/secrets-config/registered-apps";
 
 type AppStoreAppInfo = {
   found: boolean;
