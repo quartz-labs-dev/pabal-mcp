@@ -1,10 +1,12 @@
-import { createGooglePlayClient } from "@servers/mcp/core/clients";
+import { createGooglePlayClient } from "@servers/mcp/core/clients/google-play-factory";
 import type { GooglePlayClient } from "@packages/stores/play-store/client";
 import type { GooglePlayMultilingualAsoData } from "@/packages/configs/aso-config/types";
 import type { PreparedAsoData } from "@/packages/configs/aso-config/utils";
 import type { EnvConfig } from "@/packages/configs/secrets-config/types";
+import { toErrorMessage } from "@servers/mcp/core/clients/client-factory-helpers";
 import {
   checkPushPrerequisites,
+  toServiceResult,
   updateRegisteredLocales,
 } from "./service-helpers";
 import {
@@ -16,7 +18,6 @@ import {
   type CreatedGooglePlayVersion,
   type VerifyAuthResult,
 } from "./types";
-import { toErrorMessage, toServiceResult } from "./service-helpers";
 import type { GooglePlayReleaseNote } from "@/packages/configs/aso-config/types";
 import { verifyPlayStoreAuth } from "@packages/stores/play-store/verify-auth";
 

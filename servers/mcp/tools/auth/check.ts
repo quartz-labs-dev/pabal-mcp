@@ -4,7 +4,8 @@
 
 import { getStoreTargets } from "@/packages/configs/aso-config/store";
 import { type StoreType } from "@/packages/configs/aso-config/types";
-import { AppStoreService, GooglePlayService } from "@servers/mcp/core/services";
+import { AppStoreService } from "@servers/mcp/core/services/app-store-service";
+import { GooglePlayService } from "@servers/mcp/core/services/google-play-service";
 
 const appStoreService = new AppStoreService();
 const googlePlayService = new GooglePlayService();

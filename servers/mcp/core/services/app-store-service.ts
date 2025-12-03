@@ -1,4 +1,4 @@
-import { createAppStoreClient } from "@servers/mcp/core/clients";
+import { createAppStoreClient } from "@servers/mcp/core/clients/app-store-factory";
 import type { AppStoreClient } from "@/packages/stores/app-store/client";
 import type {
   AppStoreMultilingualAsoData,
@@ -7,9 +7,9 @@ import type {
 import type { PreparedAsoData } from "@/packages/configs/aso-config/utils";
 import type { EnvConfig } from "@/packages/configs/secrets-config/types";
 import { verifyAppStoreAuth } from "@/packages/stores/app-store/verify-auth";
+import { toErrorMessage } from "@servers/mcp/core/clients/client-factory-helpers";
 import {
   checkPushPrerequisites,
-  toErrorMessage,
   toServiceResult,
   updateRegisteredLocales,
 } from "./service-helpers";
@@ -273,11 +273,6 @@ export class AppStoreService {
       }
 
       if (failedFieldsList.length > 0) {
-        const fieldDisplayNames: Record<string, string> = {
-          name: "Name",
-          subtitle: "Subtitle",
-        };
-
         return {
           success: true,
           localesPushed: localesToPush,

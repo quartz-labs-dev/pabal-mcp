@@ -57,11 +57,3 @@ export function decodeJwt(token: string): {
     signature,
   };
 }
-
-function base64url(input: string | Buffer): string {
-  return Buffer.from(input)
-    .toString("base64")
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-}

@@ -2,7 +2,6 @@
  * add-app: Register app by bundleId or packageName
  */
 
-import { loadConfig } from "@/packages/configs/secrets-config/config";
 import {
   registerApp,
   findApp,
@@ -14,7 +13,8 @@ import {
   toRegisteredAppStoreInfo,
   toRegisteredGooglePlayInfo,
 } from "@servers/mcp/core/helpers/registration";
-import { AppStoreService, GooglePlayService } from "@servers/mcp/core/services";
+import { AppStoreService } from "@servers/mcp/core/services/app-store-service";
+import { GooglePlayService } from "@servers/mcp/core/services/google-play-service";
 
 const appStoreService = new AppStoreService();
 const googlePlayService = new GooglePlayService();
@@ -58,8 +58,6 @@ Usage:
       ],
     };
   }
-
-  const config = loadConfig();
 
   // Check if already registered
   const existing = findApp(identifier);

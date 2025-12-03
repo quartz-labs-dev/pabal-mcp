@@ -1,6 +1,5 @@
 import {
   APP_STORE_SUPPORTED_LOCALES,
-  DEFAULT_LOCALE,
   GOOGLE_PLAY_SUPPORTED_LANGUAGES,
 } from "./constants";
 

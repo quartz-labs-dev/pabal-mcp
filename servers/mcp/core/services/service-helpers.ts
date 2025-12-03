@@ -2,8 +2,6 @@ import type { ClientFactoryResult } from "../clients/types";
 import type { ServiceResult } from "./types";
 import { updateAppSupportedLocales } from "@/packages/configs/secrets-config/registered-apps";
 
-export { toErrorMessage } from "../clients/client-factory-helpers";
-
 export const toServiceResult = <T>(
   clientResult: ClientFactoryResult<T>
 ): ServiceResult<T> =>

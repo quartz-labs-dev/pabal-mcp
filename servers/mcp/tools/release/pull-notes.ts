@@ -12,11 +12,9 @@ import {
 } from "@/packages/configs/aso-config/utils";
 import { getStoreTargets } from "@/packages/configs/aso-config/store";
 import { loadConfig } from "@/packages/configs/secrets-config/config";
-import {
-  AppResolutionService,
-  AppStoreService,
-  GooglePlayService,
-} from "@servers/mcp/core/services";
+import { AppResolutionService } from "@servers/mcp/core/services/app-resolution-service";
+import { AppStoreService } from "@servers/mcp/core/services/app-store-service";
+import { GooglePlayService } from "@servers/mcp/core/services/google-play-service";
 import { writeFileSync } from "node:fs";
 
 const appStoreService = new AppStoreService();

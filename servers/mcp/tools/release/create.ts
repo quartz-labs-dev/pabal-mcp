@@ -1,10 +1,8 @@
 import { type StoreType } from "@/packages/configs/aso-config/types";
 import { loadConfig } from "@/packages/configs/secrets-config/config";
-import {
-  AppResolutionService,
-  AppStoreService,
-  GooglePlayService,
-} from "@servers/mcp/core/services";
+import { AppResolutionService } from "@servers/mcp/core/services/app-resolution-service";
+import { AppStoreService } from "@servers/mcp/core/services/app-store-service";
+import { GooglePlayService } from "@servers/mcp/core/services/google-play-service";
 import { getLatestVersions } from "@servers/mcp/core/workflows/version-info";
 
 const appStoreService = new AppStoreService();

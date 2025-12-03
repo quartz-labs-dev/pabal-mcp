@@ -11,11 +11,9 @@ import {
 } from "@/packages/configs/aso-config/utils";
 import { loadConfig } from "@/packages/configs/secrets-config/config";
 import { existsSync } from "node:fs";
-import {
-  AppResolutionService,
-  AppStoreService,
-  GooglePlayService,
-} from "@servers/mcp/core/services";
+import { AppResolutionService } from "@servers/mcp/core/services/app-resolution-service";
+import { AppStoreService } from "@servers/mcp/core/services/app-store-service";
+import { GooglePlayService } from "@servers/mcp/core/services/google-play-service";
 import { formatPushResult } from "@servers/mcp/core/helpers/formatters";
 
 const appResolutionService = new AppResolutionService();

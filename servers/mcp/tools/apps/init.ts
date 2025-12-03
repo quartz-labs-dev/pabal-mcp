@@ -14,7 +14,8 @@ import {
   toRegisteredAppStoreInfo,
   toRegisteredGooglePlayInfo,
 } from "@servers/mcp/core/helpers/registration";
-import { AppStoreService, GooglePlayService } from "@servers/mcp/core/services";
+import { AppStoreService } from "@servers/mcp/core/services/app-store-service";
+import { GooglePlayService } from "@servers/mcp/core/services/google-play-service";
 
 const appStoreService = new AppStoreService();
 const googlePlayService = new GooglePlayService();
@@ -246,7 +247,6 @@ export async function handleSetupApps(options: SetupAppsOptions) {
           });
 
           console.error(`[MCP]     ✅ Registered: ${slug}`);
-          const storeInfo = googlePlayInfo ? " (🍎+🤖)" : " (🍎)";
           registered.push({
             name: app.name,
             slug,

@@ -1,4 +1,4 @@
-import { GooglePlayService } from "@servers/mcp/core/services";
+import { GooglePlayService } from "@servers/mcp/core/services/google-play-service";
 
 const googlePlayService = new GooglePlayService();
 

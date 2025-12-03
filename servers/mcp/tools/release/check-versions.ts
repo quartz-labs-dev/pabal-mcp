@@ -1,6 +1,6 @@
 import { getStoreTargets } from "@/packages/configs/aso-config/store";
 import { type StoreType } from "@/packages/configs/aso-config/types";
-import { AppResolutionService } from "@servers/mcp/core/services";
+import { AppResolutionService } from "@servers/mcp/core/services/app-resolution-service";
 import { getLatestVersions } from "@servers/mcp/core/workflows/version-info";
 
 const appResolutionService = new AppResolutionService();

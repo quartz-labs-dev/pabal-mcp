@@ -4,18 +4,16 @@ import { chdir } from "node:process";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio";
 import { z } from "zod";
-import {
-  handleAuthCheck,
-  handleSetupApps,
-  handleAddApp,
-  handleSearchApps,
-  handleAsoPull,
-  handleAsoPush,
-  handleAsoCreateVersion,
-  handleAsoPullReleaseNotes,
-  handleUpdateNotes,
-  handleCheckLatestVersions,
-} from "./tools";
+import { handleAuthCheck } from "./tools/auth/check";
+import { handleSetupApps } from "./tools/apps/init";
+import { handleAddApp } from "./tools/apps/add";
+import { handleSearchApps } from "./tools/apps/search";
+import { handleAsoPull } from "./tools/aso/pull";
+import { handleAsoPush } from "./tools/aso/push";
+import { handleAsoCreateVersion } from "./tools/release/create";
+import { handleAsoPullReleaseNotes } from "./tools/release/pull-notes";
+import { handleUpdateNotes } from "./tools/release/update-notes";
+import { handleCheckLatestVersions } from "./tools/release/check-versions";
 
 // Change to project root first
 // tsx automatically resolves tsconfig.json paths when run from project root

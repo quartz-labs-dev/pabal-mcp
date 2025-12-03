@@ -1,9 +1,6 @@
 import { findApp } from "@/packages/configs/secrets-config/registered-apps";
-import {
-  serviceFailure,
-  serviceSuccess,
-  toErrorMessage,
-} from "./service-helpers";
+import { toErrorMessage } from "@servers/mcp/core/clients/client-factory-helpers";
+import { serviceFailure, serviceSuccess } from "./service-helpers";
 import { type ResolvedAppContext, type ServiceResult } from "./types";
 
 interface ResolveAppOptions {

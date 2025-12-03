@@ -7,15 +7,12 @@
 
 import { type StoreType } from "@/packages/configs/aso-config/types";
 import {
-  createTranslationRequests,
   separateTranslationsByStore,
   collectSupportedLocales,
 } from "@servers/mcp/core/helpers/translate-release-notes";
-import {
-  AppResolutionService,
-  AppStoreService,
-  GooglePlayService,
-} from "@servers/mcp/core/services";
+import { AppResolutionService } from "@servers/mcp/core/services/app-resolution-service";
+import { AppStoreService } from "@servers/mcp/core/services/app-store-service";
+import { GooglePlayService } from "@servers/mcp/core/services/google-play-service";
 import { formatReleaseNotesUpdate } from "@servers/mcp/core/helpers/formatters";
 
 const appStoreService = new AppStoreService();

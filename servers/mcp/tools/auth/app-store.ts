@@ -1,4 +1,4 @@
-import { AppStoreService } from "@servers/mcp/core/services";
+import { AppStoreService } from "@servers/mcp/core/services/app-store-service";
 
 const appStoreService = new AppStoreService();
 
