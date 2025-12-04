@@ -94,19 +94,43 @@ export async function handleSearchApps(options: SearchAppsOptions) {
 
   try {
     const config = loadRegisteredApps();
+    console.error(`[MCP]   Loaded ${config.apps.length} apps from config`);
+    if (config.apps.length > 0) {
+      console.error(
+        `[MCP]   App slugs: ${config.apps.map((a) => a.slug).join(", ")}`
+      );
+    }
     let results: RegisteredApp[];
 
     if (!query) {
       // If no query, return full list
       results = config.apps;
     } else {
-      // Try exact match first
+      // Try exact match first (by slug, bundleId, packageName)
       const exactMatch = findApp(query);
-      if (exactMatch) {
-        results = [exactMatch];
-      } else {
-        // Partial match
-        results = config.apps.filter((app) => matchesQuery(app, query));
+
+      // Also search for partial matches
+      const partialMatches = config.apps.filter((app) =>
+        matchesQuery(app, query)
+      );
+
+      // Combine results: exact match first, then partial matches
+      // Remove duplicates by slug
+      const seenSlugs = new Set<string>();
+      results = [];
+
+      // Add exact match first if found
+      if (exactMatch && !seenSlugs.has(exactMatch.slug)) {
+        results.push(exactMatch);
+        seenSlugs.add(exactMatch.slug);
+      }
+
+      // Add partial matches (excluding exact match if already added)
+      for (const app of partialMatches) {
+        if (!seenSlugs.has(app.slug)) {
+          results.push(app);
+          seenSlugs.add(app.slug);
+        }
       }
     }
 

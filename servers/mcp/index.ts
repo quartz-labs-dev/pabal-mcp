@@ -1,6 +1,4 @@
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
-import { chdir } from "node:process";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio";
 import { z } from "zod";
@@ -15,12 +13,9 @@ import { handleAsoPullReleaseNotes } from "./tools/release/pull-notes";
 import { handleUpdateNotes } from "./tools/release/update-notes";
 import { handleCheckLatestVersions } from "./tools/release/check-versions";
 
-// Change to project root first
-// tsx automatically resolves tsconfig.json paths when run from project root
-const mcpServerFilename = fileURLToPath(import.meta.url);
-const mcpServerDirname = dirname(mcpServerFilename);
-const projectRoot = join(mcpServerDirname, "../..");
-chdir(projectRoot);
+// MCP config sets cwd to project root, so we don't need to chdir
+// Just verify we're in the right place
+console.error(`[MCP] 📂 Working directory: ${process.cwd()}`);
 
 const server = new McpServer(
   { name: "pabal-mcp", version: "0.0.1" },

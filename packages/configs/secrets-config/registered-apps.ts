@@ -59,13 +59,24 @@ function getRegisteredAppsPath(): string {
 export function loadRegisteredApps(): RegisteredAppsConfig {
   const filePath = getRegisteredAppsPath();
 
+  console.error(`[RegisteredApps] 🔍 Loading registered apps...`);
+  console.error(`[RegisteredApps]   File path: ${filePath}`);
+  console.error(`[RegisteredApps]   File exists: ${existsSync(filePath)}`);
+
   if (!existsSync(filePath)) {
+    console.error(
+      `[RegisteredApps]   ⚠️  File not found, returning empty list`
+    );
     return { apps: [] };
   }
 
   try {
     const content = readFileSync(filePath, "utf-8");
-    return JSON.parse(content) as RegisteredAppsConfig;
+    const config = JSON.parse(content) as RegisteredAppsConfig;
+    console.error(
+      `[RegisteredApps]   ✅ Loaded ${config.apps.length} apps: ${config.apps.map((a) => a.slug).join(", ")}`
+    );
+    return config;
   } catch (error) {
     throw AppError.validation(
       ERROR_CODES.REGISTERED_APPS_READ_FAILED,

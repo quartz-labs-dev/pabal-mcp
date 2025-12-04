@@ -8,17 +8,12 @@ import { DATA_DIR_ENV_KEY } from "./constants";
 import { appStoreSchema, playStoreSchema } from "./schemas";
 import type { EnvConfig } from "./types";
 
-// From packages/secrets-config/config.ts, go up 2 levels to reach project root
+// Get project root
+// MCP config sets cwd to project root via "cwd" property
 export const getProjectRoot = (): string => {
-  try {
-    if (typeof import.meta !== "undefined" && import.meta.url) {
-      const currentFile = fileURLToPath(import.meta.url);
-      return resolve(dirname(currentFile), "../..");
-    }
-  } catch {
-    // ignore
-  }
-  return process.cwd();
+  const cwd = process.cwd();
+  console.error(`[Config] 📂 Project root: ${cwd}`);
+  return cwd;
 };
 
 export function getConfigPath(): string {
