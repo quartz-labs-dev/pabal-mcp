@@ -1,8 +1,8 @@
 ![Cover](public/cover.gif)
 
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=pabal-mcp&config=eyJjb21tYW5kIjoibnB4IC15IHBhYmFsLW1jcEBsYXRlc3QifQ%3D%3D) [<img alt="Install in VS Code (npx)" src="https://img.shields.io/badge/Install%20in%20VS%20Code-0098FF?style=for-the-badge&logo=visualstudiocode&logoColor=white">](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%7B%22name%22%3A%22pabal-mcp%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22pabal-mcp%40latest%22%5D%7D)
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=pabal-mcp&config=eyJjb21tYW5kIjoiYmFzaCIsImFyZ3MiOlsiL0FCU09MVVRFL1BBVEgvVE8vcGFiYWwtbWNwL3J1bi1tY3Auc2giXSwiY3dkIjoiL0FCU09MVVRFL1BBVEgvVE8vcGFiYWwtbWNwIn0%3D)
 
-[![한국어 문서](https://img.shields.io/badge/docs-한국어-green)](./i18n/README.ko.md)
+[![Korean docs](https://img.shields.io/badge/docs-Korean-green)](./i18n/README.ko.md)
 
 # pabal-mcp — MCP server for App Store / Play Store ASO
 
@@ -43,7 +43,7 @@ Up-to-date ASO workflows exposed as MCP tools. Run it as a stdio MCP server (Cla
 }
 ```
 
-Data directory: by default, files are written to the project root. Override with `dataDir` in `secrets/aso-config.json` (absolute or repo-relative) or `PABAL_MCP_DATA_DIR` environment variable. Priority: config file > environment variable > project root.
+Data directory: by default, files are written to the project root. Override with `dataDir` in `secrets/aso-config.json` (absolute or repo-relative).
 
 ## 🛠️ Installation
 
@@ -51,15 +51,18 @@ Data directory: by default, files are written to the project root. Override with
 
 - Node.js >= 18
 - MCP client: Cursor, Claude Code, VS Code, Windsurf, etc.
-- App Store / Google Play credentials + `secrets/aso-config.json` (or `PABAL_MCP_DATA_DIR` pointing to your data dir)
+- App Store / Google Play credentials + `secrets/aso-config.json`
 
 > [!TIP]
 > If you repeatedly do ASO/store tasks, add a client rule like “always use pabal-mcp” so the MCP server auto-invokes without typing it every time.
 
+> [!IMPORTANT]
+> Replace every `/ABSOLUTE/PATH/TO/pabal-mcp` placeholder with your real local repo path (e.g., `/Users/you/path/to/pabal-mcp`). One-click badges include this placeholder—edit after clicking if needed.
+
 <details>
 <summary><b>Install in Cursor</b></summary>
 
-- One-click: [![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=pabal-mcp&config=eyJjb21tYW5kIjoibnB4IC15IHBhYmFsLW1jcEBsYXRlc3QifQ%3D%3D)
+- One-click: [![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=pabal-mcp&config=eyJjb21tYW5kIjoiYmFzaCIsImFyZ3MiOlsiL0FCU09MVVRFL1BBVEgvVE8vcGFiYWwtbWNwL3J1bi1tY3Auc2giXSwiY3dkIjoiL0FCU09MVVRFL1BBVEgvVE8vcGFiYWwtbWNwIn0%3D)
 - Or add to `~/.cursor/mcp.json` (global) or project `.cursor/mcp.json`:
 
 ```json
@@ -68,23 +71,18 @@ Data directory: by default, files are written to the project root. Override with
     "pabal-mcp": {
       "command": "bash",
       "args": ["/ABSOLUTE/PATH/TO/pabal-mcp/run-mcp.sh"],
-      "cwd": "/ABSOLUTE/PATH/TO/pabal-mcp",
-      "env": {
-        "PABAL_MCP_DATA_DIR": "/ABSOLUTE/PATH/TO/data"
-      }
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-mcp"
     }
   }
 }
 ```
 
-`run-mcp.sh` keeps TypeScript paths resolved from the repo root. `PABAL_MCP_DATA_DIR` is optional; `dataDir` in the config file has higher priority.
+`run-mcp.sh` keeps TypeScript paths resolved from the repo root.
 
 </details>
 
 <details>
 <summary><b>Install in VS Code</b></summary>
-
-[<img alt="Install in VS Code (npx)" src="https://img.shields.io/badge/VS_Code-VS_Code?style=flat-square&label=Install%20pabal-mcp&color=0098FF">](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%7B%22name%22%3A%22pabal-mcp%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22pabal-mcp%40latest%22%5D%7D)
 
 Example `settings.json` MCP section (local project run):
 
@@ -95,9 +93,7 @@ Example `settings.json` MCP section (local project run):
       "type": "stdio",
       "command": "bash",
       "args": ["/ABSOLUTE/PATH/TO/pabal-mcp/run-mcp.sh"],
-      "env": {
-        "PABAL_MCP_DATA_DIR": "/ABSOLUTE/PATH/TO/data"
-      }
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-mcp"
     }
   }
 }
@@ -122,8 +118,6 @@ Published package (npx):
 claude mcp add pabal-mcp -- npx -y pabal-mcp@latest
 ```
 
-If you need the data directory via env, add `--env PABAL_MCP_DATA_DIR=/ABSOLUTE/PATH/TO/data`.
-
 </details>
 
 <details>
@@ -135,9 +129,7 @@ If you need the data directory via env, add `--env PABAL_MCP_DATA_DIR=/ABSOLUTE/
     "pabal-mcp": {
       "command": "bash",
       "args": ["/ABSOLUTE/PATH/TO/pabal-mcp/run-mcp.sh"],
-      "env": {
-        "PABAL_MCP_DATA_DIR": "/ABSOLUTE/PATH/TO/data"
-      }
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-mcp"
     }
   }
 }
@@ -147,7 +139,7 @@ You can swap `command`/`args` to `npx` + `pabal-mcp@latest` for direct package e
 
 </details>
 
-> 다른 MCP 클라이언트도 대부분 위와 비슷하게 `command`/`args`에 `run-mcp.sh` 또는 `npx -y pabal-mcp@latest`를 지정하면 됩니다.
+> Other MCP clients generally work the same: point `command`/`args` to `run-mcp.sh` or `npx -y pabal-mcp@latest`.
 
 ## 🚀 Run the MCP Server
 
@@ -159,14 +151,14 @@ You can swap `command`/`args` to `npx` + `pabal-mcp@latest` for direct package e
   "mcpServers": {
     "pabal-mcp": {
       "command": "bash",
-      "args": ["/Users/you/path/to/pabal-mcp/run-mcp.sh"],
-      "cwd": "/Users/you/path/to/pabal-mcp"
+      "args": ["/ABSOLUTE/PATH/TO/pabal-mcp/run-mcp.sh"],
+      "cwd": "/ABSOLUTE/PATH/TO/pabal-mcp"
     }
   }
 }
 ```
 
-You can set `dataDir` in `secrets/aso-config.json` instead of environment variables. If you prefer env vars, set `PABAL_MCP_DATA_DIR` in the `env` block of your MCP client config.
+Set `dataDir` in `secrets/aso-config.json` to control where data is written.
 
 ## 🔧 MCP Tools
 
