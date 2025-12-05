@@ -5,9 +5,6 @@ node_modules/
 dist/
 build/
 
-# Secrets and config
-secrets/
-
 # Package manager
 yarn.lock
 
