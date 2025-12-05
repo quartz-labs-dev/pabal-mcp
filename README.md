@@ -2,11 +2,14 @@
 
 [![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=pabal-mcp&config=eyJjb21tYW5kIjoiYmFzaCIsImFyZ3MiOlsiL0FCU09MVVRFL1BBVEgvVE8vcGFiYWwtbWNwL3J1bi1tY3Auc2giXSwiY3dkIjoiL0FCU09MVVRFL1BBVEgvVE8vcGFiYWwtbWNwIn0%3D)
 
-[![Korean docs](https://img.shields.io/badge/docs-Korean-green)](./i18n/README.ko.md)
+[![한국어 docs](https://img.shields.io/badge/docs-Korean-green)](./i18n/README.ko.md)
 
-# pabal-mcp — MCP server for App Store / Play Store ASO
+# MCP server for App Store Connect & Play Console API
 
 Up-to-date ASO workflows exposed as MCP tools. Run it as a stdio MCP server (Claude Code, Cursor, MCP Inspector, etc.) to manage metadata, releases, and store syncs without leaving your AI client.
+
+> [!NOTE]
+> Runs 100% locally on your machine, so credentials and cached ASO data never leave your environment (store API calls are made directly from your device).
 
 ## ❌ Without pabal-mcp
 
