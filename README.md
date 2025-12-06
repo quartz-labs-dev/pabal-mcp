@@ -190,3 +190,15 @@ You can swap `command`/`args` to `npx` + `pabal-mcp@latest` for direct package e
 ## ✅ Testing
 
 - Run all tests: `npm test`
+
+---
+
+## 🌐 Pabal Web
+
+Want to manage ASO and SEO together? Check out **Pabal Web**.
+
+[![Pabal Web](public/pabal-web.png)](https://pabal.quartz.best/)
+
+**Pabal Web** is a Next.js-based web interface that provides a complete solution for unified management of ASO, SEO, Google Search Console indexing, and more.
+
+👉 [Visit Pabal Web](https://pabal.quartz.best/)

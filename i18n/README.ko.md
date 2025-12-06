@@ -170,3 +170,15 @@ Claude Code MCP 설정에 추가 (JSON 형식):
 ## ✅ 테스트
 
 - 전체 테스트 실행: `npm test`
+
+---
+
+## 🌐 Pabal Web
+
+ASO와 SEO를 함께 관리하고 싶으신가요? **Pabal Web**을 확인해보세요.
+
+[![Pabal Web](../public/pabal-web.png)](https://pabal.quartz.best/)
+
+**Pabal Web**은 Next.js 기반의 웹 인터페이스로, ASO, SEO, Google Search Console 인덱싱 등을 통합 관리할 수 있는 완전한 솔루션입니다.
+
+👉 [Pabal Web 방문하기](https://pabal.quartz.best/)
