@@ -1,6 +1,6 @@
 {
   "name": "pabal-mcp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "MCP server for App Store / Play Store ASO workflows",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
