@@ -1,6 +1,6 @@
 ![Cover](../public/cover.gif)
 
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=pabal-mcp&config=eyJjb21tYW5kIjoiYmFzaCIsImFyZ3MiOlsiL0FCU09MVVRFL1BBVEgvVE8vcGFiYWwtbWNwL3J1bi1tY3Auc2giXSwiY3dkIjoiL0FCU09MVVRFL1BBVEgvVE8vcGFiYWwtbWNwIn0%3D)
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=pabal-mcp&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsInBhYmFsLW1jcCJdfQ%3D%3D)
 
 [![English docs](https://img.shields.io/badge/docs-English-blue)](../README.md)
 
@@ -11,11 +11,15 @@
 > [!NOTE]
 > 100% 로컬에서 실행되어 자격 증명과 캐시된 ASO 데이터가 외부로 전송되지 않습니다. 스토어 API 호출도 당신의 로컬 머신에서 직접 수행합니다.
 
+<br>
+
 ## ❌ pabal-mcp 없이
 
 - 스토어마다 클릭하며 업데이트
 - 로캘·릴리스 노트 복붙 오류
 - 프로젝트마다 반복 설정
+
+<br>
 
 ## ✅ pabal-mcp와 함께
 
@@ -23,90 +27,7 @@
 - 릴리스 노트 업데이트·버전 체크를 AI 클라이언트 안에서 수행
 - 로컬 캐시/설정 기반의 재사용 가능한 워크플로
 
-## 🛠️ 빠른 시작
-
-### 옵션 1: npm 패키지 (권장)
-
-```bash
-npm install -g pabal-mcp
-# 또는 npx 사용
-npx pabal-mcp
-```
-
-### 옵션 2: 소스에서 실행
-
-```bash
-git clone https://github.com/quartz-labs-dev/pabal-mcp.git
-cd pabal-mcp
-yarn install
-yarn dev:mcp
-```
-
-### 자격 증명 설정
-
-1. 설정 디렉터리 생성 및 권한 설정:
-
-```bash
-mkdir -p ~/.config/pabal-mcp
-chmod 700 ~/.config/pabal-mcp
-```
-
-2. 예제 파일 복사 (저장소에서):
-
-```bash
-cp .config-example/* ~/.config/pabal-mcp/
-chmod 600 ~/.config/pabal-mcp/*
-```
-
-3. `~/.config/pabal-mcp/`에 자격 증명 추가:
-
-   **App Store Connect API 키**:
-   - App Store Connect → Users and Access → [Keys](https://appstoreconnect.apple.com/access/integrations/api) → "Generate API Key"에서 Admin/App Manager 권한으로 키 생성 후 `.p8`를 다운로드합니다(한 번만 가능). `~/.config/pabal-mcp/app-store-key.p8`로 저장하세요.
-   - 키 상세 화면에서 Issuer ID와 Key ID를 복사합니다.
-
-   **Google Play 서비스 계정 JSON**:
-   - [Google Cloud 서비스 계정 관리](https://console.cloud.google.com/projectselector2/iam-admin/serviceaccounts?supportedpurview=project) → 새 서비스 계정 생성(이름은 `pabal` 권장) → 키 생성 → JSON 다운로드.
-   - 다운로드한 JSON을 `~/.config/pabal-mcp/google-play-service-account.json`으로 저장합니다.
-   - Play Console → [사용자 및 권한](https://play.google.com/console/u/0/developers/users-and-permissions) → 새 사용자 초대 → 서비스 계정 이메일 입력.
-     - 앱 권한: ASO 작업할 앱들을 선택.
-     - 계정 권한: 아래 항목을 체크:
-       - 앱 정보 보기 및 보고서 일괄 다운로드(읽기 전용)
-       - 앱 초안 생성·수정·삭제
-       - 프로덕션으로 출시
-       - 기기 제외 목록 관리
-       - Play 앱 서명 사용
-       - 스토어 노출(스토어 프레즌스) 관리
-
-   **설정 파일 편집** `~/.config/pabal-mcp/config.json`:
-
-   ```json
-   {
-     "appStore": {
-       "issuerId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-       "keyId": "XXXXXXXXXX",
-       "privateKeyPath": "./app-store-key.p8"
-     },
-     "googlePlay": {
-       "serviceAccountKeyPath": "./google-play-service-account.json"
-     }
-   }
-   ```
-
-4. 스토어 데이터 가져오기
-
-   `apps-init`을 사용해 스토어 API에서 앱을 가져와 자동 등록합니다.
-   이 명령은 `~/.config/pabal-mcp/registered-apps.json`에 스토어에서 사용 가능한 앱들을 저장합니다.
-
-> [!NOTE]
-> **설정 파일 위치:** `~/.config/pabal-mcp/config.json`
-
-> [!WARNING]
-> **보안:** 설정 파일에는 민감한 API 키가 포함됩니다. 파일 권한이 너무 개방적이면 서버가 런타임에 경고를 표시합니다. 다음 명령으로 보안 설정하세요:
->
-> ```bash
-> chmod 700 ~/.config/pabal-mcp
-> chmod 600 ~/.config/pabal-mcp/*
-> ```
+<br>
 
 ## 🛠️ MCP 클라이언트 설치
 
@@ -114,7 +35,6 @@ chmod 600 ~/.config/pabal-mcp/*
 
 - Node.js 18 이상
 - MCP 클라이언트: Cursor, Claude Code, VS Code, Windsurf
-- App Store / Google Play 자격 증명 (위 빠른 시작 참조)
 
 > [!TIP]
 > ASO/스토어 작업을 자주 한다면 MCP 규칙에 "항상 pabal-mcp 사용" 같은 자동 호출 규칙을 추가하세요.
@@ -193,6 +113,96 @@ Claude Code MCP 설정에 추가 (JSON 형식):
 }
 ```
 
+<br>
+
+## 🔐 자격 증명 설정
+
+1. 설정 디렉터리 생성 및 권한 설정:
+
+```bash
+mkdir -p ~/.config/pabal-mcp
+chmod 700 ~/.config/pabal-mcp
+```
+
+2. 예제 파일 복사 (저장소에서 또는 직접 생성):
+
+```bash
+# 저장소를 클론한 경우:
+cp .config-example/* ~/.config/pabal-mcp/
+chmod 600 ~/.config/pabal-mcp/*
+```
+
+3. 플레이스홀더가 채워진 설정 파일 생성:
+
+```bash
+cat <<'EOF' > ~/.config/pabal-mcp/config.json
+{
+  "appStore": {
+    "issuerId": "xxxx",
+    "keyId": "xxxx",
+    "privateKeyPath": "./app-store-key.p8"
+  },
+  "googlePlay": {
+    "serviceAccountKeyPath": "./google-play-service-account.json"
+  }
+}
+EOF
+```
+
+다음 단계에서 App Store Connect 키를 확인한 뒤 `issuerId`, `keyId` 값을 실제 값으로 바꿔주세요.
+
+4. `~/.config/pabal-mcp/`에 자격 증명 추가:
+
+   **App Store Connect API 키**:
+   - App Store Connect → Users and Access → [Keys](https://appstoreconnect.apple.com/access/integrations/api) → "Generate API Key"에서 Admin/App Manager 권한으로 키 생성 후 `.p8`를 다운로드합니다(한 번만 가능). `~/.config/pabal-mcp/app-store-key.p8`로 저장하세요.
+   - 키 상세 화면에서 Issuer ID와 Key ID를 복사한 뒤 `~/.config/pabal-mcp/config.json`의 `issuerId`, `keyId`에 반영하세요.
+
+   **Google Play 서비스 계정 JSON**:
+   - [Google Cloud 서비스 계정 관리](https://console.cloud.google.com/projectselector2/iam-admin/serviceaccounts?supportedpurview=project) → 새 서비스 계정 생성(이름은 `pabal` 권장) → 키 생성 → JSON 다운로드.
+   - 다운로드한 JSON을 `~/.config/pabal-mcp/google-play-service-account.json`으로 저장합니다.
+   - Play Console → [사용자 및 권한](https://play.google.com/console/u/0/developers/users-and-permissions) → 새 사용자 초대 → 서비스 계정 이메일 입력.
+     - 앱 권한: ASO 작업할 앱들을 선택.
+     - 계정 권한: 아래 항목을 체크:
+       - 앱 정보 보기 및 보고서 일괄 다운로드(읽기 전용)
+       - 앱 초안 생성·수정·삭제
+       - 프로덕션으로 출시
+       - 기기 제외 목록 관리
+       - Play 앱 서명 사용
+       - 스토어 노출(스토어 프레즌스) 관리
+
+   **설정 파일 형태 (ID 업데이트 후)**:
+
+   ```json
+   {
+     "appStore": {
+       "issuerId": "<your-issuer-id>",
+       "keyId": "<your-key-id>",
+       "privateKeyPath": "./app-store-key.p8"
+     },
+     "googlePlay": {
+       "serviceAccountKeyPath": "./google-play-service-account.json"
+     }
+   }
+   ```
+
+5. 스토어 데이터 가져오기
+
+   `apps-init`을 사용해 스토어 API에서 앱을 가져와 자동 등록합니다.
+   이 명령은 `~/.config/pabal-mcp/registered-apps.json`에 스토어에서 사용 가능한 앱들을 저장합니다.
+
+> [!NOTE]
+> **설정 파일 위치:** `~/.config/pabal-mcp/config.json`
+
+> [!WARNING]
+> **보안:** 설정 파일에는 민감한 API 키가 포함됩니다. 파일 권한이 너무 개방적이면 서버가 런타임에 경고를 표시합니다. 다음 명령으로 보안 설정하세요:
+>
+> ```bash
+> chmod 700 ~/.config/pabal-mcp
+> chmod 600 ~/.config/pabal-mcp/*
+> ```
+
+<br>
+
 ## 🔧 MCP 도구
 
 - 인증
@@ -208,13 +218,30 @@ Claude Code MCP 설정에 추가 (JSON 형식):
   - `release-check-versions`: 앱별 최신 버전 조회
   - `release-create`: 새 버전 생성
   - `release-pull-notes`: 릴리스 노트를 로컬 캐시(.aso/)에 가져오기
-  - `release-update-notes`: 릴리스 노트/What’s New 업데이트
+  - `release-update-notes`: 릴리스 노트/What's New 업데이트
 
-## ✅ 테스트
+<br>
 
-- 전체 테스트 실행: `npm test`
+## 🏗️ 개발
+
+### 소스에서 실행
+
+```bash
+git clone https://github.com/quartz-labs-dev/pabal-mcp.git
+cd pabal-mcp
+yarn install
+yarn dev:mcp
+```
+
+### 테스트
+
+전체 테스트 실행: `npm test`
+
+<br>
 
 ---
+
+<br>
 
 ## 🌐 Pabal Web
 

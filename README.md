@@ -1,6 +1,6 @@
 ![Cover](public/cover.gif)
 
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=pabal-mcp&config=eyJjb21tYW5kIjoiYmFzaCIsImFyZ3MiOlsiL0FCU09MVVRFL1BBVEgvVE8vcGFiYWwtbWNwL3J1bi1tY3Auc2giXSwiY3dkIjoiL0FCU09MVVRFL1BBVEgvVE8vcGFiYWwtbWNwIn0%3D)
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=pabal-mcp&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsInBhYmFsLW1jcCJdfQ%3D%3D)
 
 [![한국어 docs](https://img.shields.io/badge/docs-Korean-green)](./i18n/README.ko.md)
 
@@ -11,11 +11,15 @@ Up-to-date ASO workflows exposed as MCP tools. Run it as a stdio MCP server (Cla
 > [!NOTE]
 > Runs 100% locally on your machine, so credentials and cached ASO data never leave your environment (store API calls are made directly from your device).
 
+<br>
+
 ## ❌ Without pabal-mcp
 
 - Manual App Store Connect and Google Play Console clicks for every update
 - Copy-paste errors across locales and release notes
 - Repeating the same setup per client or project
+
+<br>
 
 ## ✅ With pabal-mcp
 
@@ -23,88 +27,7 @@ Up-to-date ASO workflows exposed as MCP tools. Run it as a stdio MCP server (Cla
 - Consistent release note updates and version checks from your AI client
 - Reusable, scriptable workflows backed by local cache and config
 
-## 🛠️ Quick Setup
-
-### Option 1: npm package (Recommended)
-
-```bash
-npm install -g pabal-mcp
-# or use npx
-npx pabal-mcp
-```
-
-### Option 2: From source
-
-```bash
-git clone https://github.com/quartz-labs-dev/pabal-mcp.git
-cd pabal-mcp
-yarn install
-yarn dev:mcp
-```
-
-### Configure credentials
-
-1. Create config directory and set permissions:
-
-```bash
-mkdir -p ~/.config/pabal-mcp
-chmod 700 ~/.config/pabal-mcp
-```
-
-2. Copy example files (from the repository):
-
-```bash
-cp .config-example/* ~/.config/pabal-mcp/
-chmod 600 ~/.config/pabal-mcp/*
-```
-
-3. Add your credentials to `~/.config/pabal-mcp/`:
-
-   **App Store Connect API key**:
-   - [App Store Connect > Users and Access > Keys](https://appstoreconnect.apple.com/access/integrations/api) → "Generate API Key." Use Admin/App Manager, download the `.p8` (only downloadable once), and save it as `~/.config/pabal-mcp/app-store-key.p8`.
-   - Copy the Issuer ID and Key ID from the key details.
-
-   **Google Play service account JSON**:
-   - [Google Cloud Manage service accounts](https://console.cloud.google.com/projectselector2/iam-admin/serviceaccounts?supportedpurview=project) → create a service account (name it `pabal` for clarity) → Create key → JSON.
-   - Save the downloaded JSON as `~/.config/pabal-mcp/google-play-service-account.json`.
-   - Grant Play Console access to that service account email: go to [Users and permissions](https://play.google.com/console/u/0/developers/users-and-permissions) → Invite new user → enter the service account email → choose the ASO apps → enable:
-     - View app information and download bulk reports (read-only)
-     - Create, edit, and delete drafts of apps
-     - Release to production
-     - Manage device exclusion lists
-     - Use Play App Signing
-     - Manage store presence
-
-   **Edit config file** `~/.config/pabal-mcp/config.json`:
-
-   ```json
-   {
-     "appStore": {
-       "issuerId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-       "keyId": "XXXXXXXXXX",
-       "privateKeyPath": "./app-store-key.p8"
-     },
-     "googlePlay": {
-       "serviceAccountKeyPath": "./google-play-service-account.json"
-     }
-   }
-   ```
-
-4. Pull store data
-
-   Use `apps-init` to fetch and auto-register existing apps from the store APIs.
-   This will populate your `~/.config/pabal-mcp/registered-apps.json` with the apps available in your stores.
-
-> [!NOTE]
-> **Config file location:** `~/.config/pabal-mcp/config.json`
-
-> [!WARNING]
-> **Security:** Config files contain sensitive API keys. The server will warn you at runtime if file permissions are too permissive. Run these commands to secure your config:
->
-> ```bash
-> chmod 700 ~/.config/pabal-mcp
-> chmod 600 ~/.config/pabal-mcp/*
-> ```
+<br>
 
 ## 🛠️ MCP Client Installation
 
@@ -112,7 +35,6 @@ chmod 600 ~/.config/pabal-mcp/*
 
 - Node.js >= 18
 - MCP client: Cursor, Claude Code, VS Code, Windsurf, etc.
-- App Store / Google Play credentials (see Quick Setup above)
 
 > [!TIP]
 > If you repeatedly do ASO/store tasks, add a client rule like "always use pabal-mcp" so the MCP server auto-invokes without typing it every time.
@@ -203,6 +125,94 @@ Or if installed globally (`npm install -g pabal-mcp`):
 
 </details>
 
+<br>
+
+## 🔐 Configure Credentials
+
+1. Create config directory and set permissions:
+
+```bash
+mkdir -p ~/.config/pabal-mcp
+chmod 700 ~/.config/pabal-mcp
+```
+
+2. Copy example files (from the repository or create manually):
+
+```bash
+# If you have the repository cloned:
+cp .config-example/* ~/.config/pabal-mcp/
+chmod 600 ~/.config/pabal-mcp/*
+```
+
+3. Create the config file (pre-filled placeholders):
+
+```bash
+cat <<'EOF' > ~/.config/pabal-mcp/config.json
+{
+  "appStore": {
+    "issuerId": "xxxx",
+    "keyId": "xxxx",
+    "privateKeyPath": "./app-store-key.p8"
+  },
+  "googlePlay": {
+    "serviceAccountKeyPath": "./google-play-service-account.json"
+  }
+}
+EOF
+```
+
+Replace the `issuerId` and `keyId` placeholders in the next step after you grab your App Store Connect keys.
+
+4. Add your credentials to `~/.config/pabal-mcp/`:
+
+   **App Store Connect API key**:
+   - [App Store Connect > Users and Access > Keys](https://appstoreconnect.apple.com/access/integrations/api) → "Generate API Key." Use Admin/App Manager, download the `.p8` (only downloadable once), and save it as `~/.config/pabal-mcp/app-store-key.p8`.
+   - Copy the Issuer ID and Key ID from the key details, then update `issuerId` and `keyId` in `~/.config/pabal-mcp/config.json` with those values.
+
+   **Google Play service account JSON**:
+   - [Google Cloud Manage service accounts](https://console.cloud.google.com/projectselector2/iam-admin/serviceaccounts?supportedpurview=project) → create a service account (name it `pabal` for clarity) → Create key → JSON.
+   - Save the downloaded JSON as `~/.config/pabal-mcp/google-play-service-account.json`.
+   - Grant Play Console access to that service account email: go to [Users and permissions](https://play.google.com/console/u/0/developers/users-and-permissions) → Invite new user → enter the service account email → choose the ASO apps → enable:
+     - View app information and download bulk reports (read-only)
+     - Create, edit, and delete drafts of apps
+     - Release to production
+     - Manage device exclusion lists
+     - Use Play App Signing
+     - Manage store presence
+
+   **Config file shape (after updating your IDs):**
+
+   ```json
+   {
+     "appStore": {
+       "issuerId": "<your-issuer-id>",
+       "keyId": "<your-key-id>",
+       "privateKeyPath": "./app-store-key.p8"
+     },
+     "googlePlay": {
+       "serviceAccountKeyPath": "./google-play-service-account.json"
+     }
+   }
+   ```
+
+5. Pull store data
+
+   Use `apps-init` to fetch and auto-register existing apps from the store APIs.
+   This will populate your `~/.config/pabal-mcp/registered-apps.json` with the apps available in your stores.
+
+> [!NOTE]
+> **Config file location:** `~/.config/pabal-mcp/config.json`
+
+> [!WARNING]
+> **Security:** Config files contain sensitive API keys. The server will warn you at runtime if file permissions are too permissive. Run these commands to secure your config:
+>
+> ```bash
+> chmod 700 ~/.config/pabal-mcp
+> chmod 600 ~/.config/pabal-mcp/*
+> ```
+
+<br>
+
 ## 🔧 MCP Tools
 
 - Authentication
@@ -220,11 +230,28 @@ Or if installed globally (`npm install -g pabal-mcp`):
   - `release-pull-notes`: Pull release notes to the `.aso/` cache.
   - `release-update-notes`: Update release notes/what's new.
 
-## ✅ Testing
+<br>
 
-- Run all tests: `npm test`
+## 🏗️ Development
+
+### From source
+
+```bash
+git clone https://github.com/quartz-labs-dev/pabal-mcp.git
+cd pabal-mcp
+yarn install
+yarn dev:mcp
+```
+
+### Testing
+
+Run all tests: `npm test`
+
+<br>
 
 ---
+
+<br>
 
 ## 🌐 Pabal Web
 
