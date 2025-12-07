@@ -105,9 +105,9 @@ export class AppStoreClient {
 
         apps.push({
           id: app.id,
-          name: englishName || app.attributes.name,
-          bundleId: app.attributes.bundleId,
-          sku: app.attributes.sku,
+          name: englishName || app.attributes?.name || "Unknown",
+          bundleId: app.attributes?.bundleId || "",
+          sku: app.attributes?.sku || "",
           isReleased,
         });
       }
@@ -155,7 +155,7 @@ export class AppStoreClient {
         await this.apiEndpoints.listAppInfoLocalizations(appInfoId);
 
       return (localizationsResponse.data || [])
-        .map((l) => l.attributes.locale)
+        .map((l) => l.attributes?.locale)
         .filter((locale): locale is string => !!locale)
         .sort();
     } catch {
@@ -272,7 +272,7 @@ export class AppStoreClient {
       `🌍 Found ${
         allLocalizations.length
       } App Store localizations: ${allLocalizations
-        .map((l) => l.attributes.locale)
+        .map((l) => l.attributes?.locale)
         .join(", ")}`
     );
 
@@ -280,7 +280,7 @@ export class AppStoreClient {
     let defaultLocale: string | undefined;
 
     for (const localization of allLocalizations) {
-      const locale = localization.attributes.locale;
+      const locale = localization.attributes?.locale;
       if (!locale) continue;
 
       const detailedLocalization =
@@ -458,7 +458,7 @@ export class AppStoreClient {
     );
 
     const existing = versionsResponse.data?.find(
-      (v) => v.attributes.versionString === versionString
+      (v) => v.attributes?.versionString === versionString
     );
 
     if (existing) {
@@ -491,7 +491,7 @@ export class AppStoreClient {
           `📦 No existing versions. Starting with ${newVersionString}`
         );
       } else {
-        const latest = latestVersion.attributes.versionString;
+        const latest = latestVersion.attributes?.versionString ?? "0.0.0";
         newVersionString = this.incrementVersion(latest);
         console.log(`📦 Latest: ${latest} → New: ${newVersionString}`);
       }

@@ -122,7 +122,8 @@ export class AppStoreService {
         return { found: false };
       }
 
-      const { versionString, appStoreState } = latestVersion.attributes;
+      const versionString = latestVersion.attributes?.versionString ?? "";
+      const appStoreState = latestVersion.attributes?.appStoreState;
 
       return {
         found: true,
@@ -156,7 +157,7 @@ export class AppStoreService {
       if (!targetVersionId) {
         const versions = await client.getAllVersions();
         const editableVersion = versions.find(
-          (v) => v.attributes.appStoreState === "PREPARE_FOR_SUBMISSION"
+          (v) => v.attributes?.appStoreState === "PREPARE_FOR_SUBMISSION"
         );
         if (!editableVersion) {
           return serviceFailure(
@@ -261,8 +262,8 @@ export class AppStoreService {
         success: true,
         data: {
           id: version.id,
-          versionString: version.attributes.versionString,
-          state: version.attributes.appStoreState,
+          versionString: version.attributes?.versionString ?? "",
+          state: version.attributes?.appStoreState,
         },
       };
     } catch (error) {
@@ -377,7 +378,7 @@ export class AppStoreService {
         try {
           const version = await client.createNewVersionWithAutoIncrement();
           const versionId = version.id;
-          const versionString = version.attributes.versionString;
+          const versionString = version.attributes?.versionString ?? "";
           const locales = Object.keys(appStoreData.locales);
 
           console.error(

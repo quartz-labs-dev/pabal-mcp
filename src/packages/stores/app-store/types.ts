@@ -1,8 +1,20 @@
 /**
  * App Store Connect API Types
  *
- * Type definitions for App Store Connect operations
+ * Type definitions for App Store Connect operations.
+ * Response types are from OpenAPI, Request attribute types are extracted.
+ *
+ * @see https://developer.apple.com/documentation/appstoreconnectapi
  */
+
+import type { components } from "./generated-types";
+
+// Schema type alias for convenience
+type Schemas = components["schemas"];
+
+// ============================================================================
+// Custom Types (not from OpenAPI)
+// ============================================================================
 
 export interface AppStoreClientConfig {
   issuerId: string;
@@ -11,65 +23,40 @@ export interface AppStoreClientConfig {
   bundleId: string;
 }
 
+// Generic API response wrapper
 export interface ApiResponse<T> {
   data: T;
   links?: { self?: string; next?: string };
 }
 
-export interface AppStoreApp {
-  id: string;
-  attributes: { name: string; bundleId: string; sku: string };
-}
+// ============================================================================
+// Response Types (from OpenAPI)
+// ============================================================================
 
-export interface AppInfo {
-  id: string;
-  attributes: { appStoreState?: string };
-}
+export type AppStoreApp = Schemas["App"];
+export type AppInfo = Schemas["AppInfo"];
+export type AppInfoLocalization = Schemas["AppInfoLocalization"];
+export type AppStoreVersion = Schemas["AppStoreVersion"];
+export type AppStoreLocalization = Schemas["AppStoreVersionLocalization"];
+export type AppStoreScreenshotSet = Schemas["AppScreenshotSet"];
+export type AppStoreScreenshot = Schemas["AppScreenshot"];
 
-export interface AppInfoLocalization {
-  id: string;
-  attributes: {
-    locale?: string;
-    name?: string;
-    subtitle?: string;
-    privacyPolicyUrl?: string;
-  };
-}
+// ============================================================================
+// Request Attribute Types (extracted from OpenAPI)
+// ============================================================================
 
-export interface AppStoreVersion {
-  id: string;
-  attributes: {
-    versionString: string;
-    platform: string;
-    appStoreState?: string;
-    releaseType?: string;
-  };
-}
+/**
+ * App Info Localization Update Request Attributes
+ * @see https://developer.apple.com/documentation/appstoreconnectapi/appinfolocalizationupdaterequest/data/attributes
+ */
+export type AppInfoLocalizationUpdateAttributes = NonNullable<
+  Schemas["AppInfoLocalizationUpdateRequest"]["data"]["attributes"]
+>;
 
-export interface AppStoreScreenshotSet {
-  id: string;
-  attributes: { screenshotDisplayType: string };
-}
-
-export interface AppStoreScreenshot {
-  id: string;
-  attributes: {
-    imageUrl?: string;
-    fileName?: string;
-    fileSize?: number;
-    imageAsset?: { width?: number; height?: number; templateUrl?: string };
-  };
-}
-
-export interface AppStoreLocalization {
-  id: string;
-  attributes: {
-    locale?: string;
-    description?: string;
-    keywords?: string;
-    marketingUrl?: string;
-    promotionalText?: string;
-    supportUrl?: string;
-    whatsNew?: string;
-  };
-}
+/**
+ * App Store Version Localization Update Request Attributes
+ * @see https://developer.apple.com/documentation/appstoreconnectapi/appstoreversionlocalizationupdaterequest/data/attributes
+ */
+export type AppStoreVersionLocalizationUpdateAttributes = NonNullable<
+  Schemas["AppStoreVersionLocalizationUpdateRequest"]["data"]["attributes"]
+>;

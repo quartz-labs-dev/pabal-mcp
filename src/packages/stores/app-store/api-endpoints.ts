@@ -14,11 +14,13 @@ import type {
   ApiResponse,
   AppInfo,
   AppInfoLocalization,
+  AppInfoLocalizationUpdateAttributes,
   AppStoreApp,
   AppStoreLocalization,
   AppStoreScreenshot,
   AppStoreScreenshotSet,
   AppStoreVersion,
+  AppStoreVersionLocalizationUpdateAttributes,
 } from "./types";
 
 export class AppStoreApiEndpoints {
@@ -120,7 +122,7 @@ export class AppStoreApiEndpoints {
 
   async updateAppInfoLocalization(
     localizationId: string,
-    attributes: Record<string, string>
+    attributes: AppInfoLocalizationUpdateAttributes
   ): Promise<void> {
     await this.request(`/appInfoLocalizations/${localizationId}`, {
       method: "PATCH",
@@ -137,7 +139,7 @@ export class AppStoreApiEndpoints {
   async createAppInfoLocalization(
     appInfoId: string,
     locale: string,
-    attributes: Record<string, string>
+    attributes: AppInfoLocalizationUpdateAttributes
   ): Promise<ApiResponse<AppInfoLocalization>> {
     return this.request<ApiResponse<AppInfoLocalization>>(
       `/appInfoLocalizations`,
@@ -211,7 +213,7 @@ export class AppStoreApiEndpoints {
 
   async updateAppStoreVersionLocalization(
     localizationId: string,
-    attributes: Partial<AppStoreLocalization["attributes"]>
+    attributes: AppStoreVersionLocalizationUpdateAttributes
   ): Promise<void> {
     await this.request(`/appStoreVersionLocalizations/${localizationId}`, {
       method: "PATCH",
@@ -228,7 +230,7 @@ export class AppStoreApiEndpoints {
   async createAppStoreVersionLocalization(
     versionId: string,
     locale: string,
-    attributes: Partial<AppStoreLocalization["attributes"]>
+    attributes: AppStoreVersionLocalizationUpdateAttributes
   ): Promise<ApiResponse<AppStoreLocalization>> {
     return this.request<ApiResponse<AppStoreLocalization>>(
       `/appStoreVersionLocalizations`,

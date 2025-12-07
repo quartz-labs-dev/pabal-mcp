@@ -24,8 +24,8 @@ import type {
 
 export function sortVersions(versions: AppStoreVersion[]): AppStoreVersion[] {
   return versions.sort((a, b) => {
-    const vA = a.attributes.versionString.split(".").map(Number);
-    const vB = b.attributes.versionString.split(".").map(Number);
+    const vA = (a.attributes?.versionString ?? "0").split(".").map(Number);
+    const vB = (b.attributes?.versionString ?? "0").split(".").map(Number);
     for (let i = 0; i < Math.max(vA.length, vB.length); i++) {
       const diff = (vB[i] || 0) - (vA[i] || 0);
       if (diff !== 0) return diff;
@@ -37,25 +37,26 @@ export function sortVersions(versions: AppStoreVersion[]): AppStoreVersion[] {
 export function selectEnglishAppName(
   localizations: AppInfoLocalization[]
 ): string | null {
-  const enUS = localizations.find((l) => l.attributes.locale === "en-US");
-  if (enUS?.attributes.name) return enUS.attributes.name;
+  const enUS = localizations.find((l) => l.attributes?.locale === "en-US");
+  if (enUS?.attributes?.name) return enUS.attributes.name;
 
-  const enGB = localizations.find((l) => l.attributes.locale === "en-GB");
-  if (enGB?.attributes.name) return enGB.attributes.name;
+  const enGB = localizations.find((l) => l.attributes?.locale === "en-GB");
+  if (enGB?.attributes?.name) return enGB.attributes.name;
 
   const enAny = localizations.find((l) =>
-    l.attributes.locale?.startsWith("en")
+    l.attributes?.locale?.startsWith("en")
   );
-  if (enAny?.attributes.name) return enAny.attributes.name;
+  if (enAny?.attributes?.name) return enAny.attributes.name;
 
   return null;
 }
 
 export function mapLocalizationsByLocale<
-  T extends { attributes: { locale?: string } },
+  T extends { attributes?: { locale?: string } },
 >(localizations: T[]): Record<string, T> {
   return localizations.reduce<Record<string, T>>((acc, loc) => {
-    if (loc.attributes.locale) acc[loc.attributes.locale] = loc;
+    const locale = loc.attributes?.locale;
+    if (locale) acc[locale] = loc;
     return acc;
   }, {});
 }
@@ -78,13 +79,15 @@ export async function fetchScreenshotsForLocalization(
     const screenshotsResponse = await listScreenshots(set.id);
 
     const urls = (screenshotsResponse.data || [])
-      .map((s) => s.attributes.imageUrl || s.attributes.imageAsset?.templateUrl)
+      .map((s) => s.attributes?.imageAsset?.templateUrl)
       .filter(Boolean) as string[];
 
     if (urls.length > 0) {
-      const mappedType =
-        SCREENSHOT_TYPE_MAP[set.attributes.screenshotDisplayType];
-      if (mappedType) screenshots[mappedType] = urls;
+      const displayType = set.attributes?.screenshotDisplayType;
+      if (displayType) {
+        const mappedType = SCREENSHOT_TYPE_MAP[displayType];
+        if (mappedType) screenshots[mappedType] = urls;
+      }
     }
   }
 
@@ -109,17 +112,20 @@ export function convertToAsoData(params: {
   } = params;
 
   return {
-    name: appInfoLocalization?.attributes.name || app.attributes.name,
-    subtitle: appInfoLocalization?.attributes.subtitle,
-    description: localization?.attributes.description || "",
-    keywords: localization?.attributes.keywords,
-    promotionalText: localization?.attributes.promotionalText,
+    name:
+      appInfoLocalization?.attributes?.name ||
+      app.attributes?.name ||
+      "Unknown",
+    subtitle: appInfoLocalization?.attributes?.subtitle,
+    description: localization?.attributes?.description || "",
+    keywords: localization?.attributes?.keywords,
+    promotionalText: localization?.attributes?.promotionalText,
     screenshots,
     bundleId,
     locale,
-    supportUrl: localization?.attributes.supportUrl,
-    marketingUrl: localization?.attributes.marketingUrl,
-    whatsNew: localization?.attributes.whatsNew,
+    supportUrl: localization?.attributes?.supportUrl,
+    marketingUrl: localization?.attributes?.marketingUrl,
+    whatsNew: localization?.attributes?.whatsNew,
   };
 }
 
@@ -150,8 +156,8 @@ export function convertToReleaseNote(
   const releaseNotesMap: Record<string, string> = {};
 
   for (const localization of localizations) {
-    const locale = localization.attributes.locale;
-    const whatsNew = localization.attributes.whatsNew;
+    const locale = localization.attributes?.locale;
+    const whatsNew = localization.attributes?.whatsNew;
 
     if (locale && whatsNew) {
       releaseNotesMap[locale] = whatsNew;
@@ -162,10 +168,17 @@ export function convertToReleaseNote(
     return null;
   }
 
+  const versionString = version.attributes?.versionString;
+  const platform = version.attributes?.platform;
+
+  if (!versionString || !platform) {
+    return null;
+  }
+
   return {
-    versionString: version.attributes.versionString,
+    versionString,
     releaseNotes: releaseNotesMap,
-    platform: version.attributes.platform,
+    platform,
   };
 }
 
@@ -178,16 +191,17 @@ export function sortReleaseNotes(
 
   const sortedVersions = sortVersions(
     releaseNotes.map((note) => ({
+      type: "appStoreVersions" as const,
       id: note.versionString,
       attributes: {
         versionString: note.versionString,
-        platform: note.platform,
+        platform: note.platform as "IOS" | "MAC_OS" | "TV_OS" | "VISION_OS",
       },
     }))
   );
 
   return sortedVersions
-    .map((version) => versionMap.get(version.attributes.versionString))
+    .map((version) => versionMap.get(version.attributes?.versionString ?? ""))
     .filter(
       (note): note is AppStoreReleaseNote => !!note && !!note.versionString
     );
