@@ -124,15 +124,7 @@ mkdir -p ~/.config/pabal-mcp
 chmod 700 ~/.config/pabal-mcp
 ```
 
-2. 예제 파일 복사 (저장소에서 또는 직접 생성):
-
-```bash
-# 저장소를 클론한 경우:
-cp .config-example/* ~/.config/pabal-mcp/
-chmod 600 ~/.config/pabal-mcp/*
-```
-
-3. 플레이스홀더가 채워진 설정 파일 생성:
+2. 플레이스홀더가 채워진 설정 파일 생성:
 
 ```bash
 cat <<'EOF' > ~/.config/pabal-mcp/config.json
@@ -151,7 +143,7 @@ EOF
 
 다음 단계에서 App Store Connect 키를 확인한 뒤 `issuerId`, `keyId` 값을 실제 값으로 바꿔주세요.
 
-4. `~/.config/pabal-mcp/`에 자격 증명 추가:
+3. `~/.config/pabal-mcp/`에 자격 증명 추가:
 
    **App Store Connect API 키**:
    - App Store Connect → Users and Access → [Keys](https://appstoreconnect.apple.com/access/integrations/api) → "Generate API Key"에서 Admin/App Manager 권한으로 키 생성 후 `.p8`를 다운로드합니다(한 번만 가능). `~/.config/pabal-mcp/app-store-key.p8`로 저장하세요.
@@ -185,21 +177,18 @@ EOF
    }
    ```
 
-5. 스토어 데이터 가져오기
+4. 스토어 데이터 가져오기
 
    `apps-init`을 사용해 스토어 API에서 앱을 가져와 자동 등록합니다.
    이 명령은 `~/.config/pabal-mcp/registered-apps.json`에 스토어에서 사용 가능한 앱들을 저장합니다.
 
-> [!NOTE]
-> **설정 파일 위치:** `~/.config/pabal-mcp/config.json`
+5. 파일 권한 잠그기 (폴더 내 모든 파일):
 
-> [!WARNING]
-> **보안:** 설정 파일에는 민감한 API 키가 포함됩니다. 파일 권한이 너무 개방적이면 서버가 런타임에 경고를 표시합니다. 다음 명령으로 보안 설정하세요:
->
-> ```bash
-> chmod 700 ~/.config/pabal-mcp
-> chmod 600 ~/.config/pabal-mcp/*
-> ```
+```bash
+chmod 600 ~/.config/pabal-mcp/*
+```
+
+`~/.config/pabal-mcp/` 아래 모든 파일에 적용됩니다. 새 자격 증명 파일을 추가할 때마다 다시 실행하세요.
 
 <br>
 

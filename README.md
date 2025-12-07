@@ -136,15 +136,7 @@ mkdir -p ~/.config/pabal-mcp
 chmod 700 ~/.config/pabal-mcp
 ```
 
-2. Copy example files (from the repository or create manually):
-
-```bash
-# If you have the repository cloned:
-cp .config-example/* ~/.config/pabal-mcp/
-chmod 600 ~/.config/pabal-mcp/*
-```
-
-3. Create the config file (pre-filled placeholders):
+2. Create the config file (pre-filled placeholders):
 
 ```bash
 cat <<'EOF' > ~/.config/pabal-mcp/config.json
@@ -163,7 +155,7 @@ EOF
 
 Replace the `issuerId` and `keyId` placeholders in the next step after you grab your App Store Connect keys.
 
-4. Add your credentials to `~/.config/pabal-mcp/`:
+3. Add your credentials to `~/.config/pabal-mcp/`:
 
    **App Store Connect API key**:
    - [App Store Connect > Users and Access > Keys](https://appstoreconnect.apple.com/access/integrations/api) → "Generate API Key." Use Admin/App Manager, download the `.p8` (only downloadable once), and save it as `~/.config/pabal-mcp/app-store-key.p8`.
@@ -195,21 +187,18 @@ Replace the `issuerId` and `keyId` placeholders in the next step after you grab 
    }
    ```
 
-5. Pull store data
+4. Pull store data
 
    Use `apps-init` to fetch and auto-register existing apps from the store APIs.
    This will populate your `~/.config/pabal-mcp/registered-apps.json` with the apps available in your stores.
 
-> [!NOTE]
-> **Config file location:** `~/.config/pabal-mcp/config.json`
+5. Lock file permissions (all files in the config folder):
 
-> [!WARNING]
-> **Security:** Config files contain sensitive API keys. The server will warn you at runtime if file permissions are too permissive. Run these commands to secure your config:
->
-> ```bash
-> chmod 700 ~/.config/pabal-mcp
-> chmod 600 ~/.config/pabal-mcp/*
-> ```
+```bash
+chmod 600 ~/.config/pabal-mcp/*
+```
+
+This applies to every file under `~/.config/pabal-mcp/`; rerun after adding any new credential file.
 
 <br>
 
