@@ -39,6 +39,16 @@ Up-to-date ASO workflows exposed as MCP tools. Run it as a stdio MCP server (Cla
 > [!TIP]
 > If you repeatedly do ASO/store tasks, add a client rule like "always use pabal-mcp" so the MCP server auto-invokes without typing it every time.
 
+### Quick global install (optional)
+
+```bash
+npm install -g pabal-mcp
+# or
+yarn global add pabal-mcp
+```
+
+If installed globally, set your MCP config to use `command: "pabal-mcp"` (no `npx` needed).
+
 <details>
 <summary><b>Install in Cursor</b></summary>
 

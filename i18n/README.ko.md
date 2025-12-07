@@ -39,6 +39,16 @@
 > [!TIP]
 > ASO/스토어 작업을 자주 한다면 MCP 규칙에 "항상 pabal-mcp 사용" 같은 자동 호출 규칙을 추가하세요.
 
+### 전역 설치(선택)
+
+```bash
+npm install -g pabal-mcp
+# 또는
+yarn global add pabal-mcp
+```
+
+전역 설치 후 MCP 설정에서는 `command: "pabal-mcp"`로 바로 사용할 수 있습니다(`npx` 불필요).
+
 ### Cursor
 
 `~/.cursor/mcp.json` 또는 프로젝트 `.cursor/mcp.json`에 추가:
