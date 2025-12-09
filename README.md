@@ -251,6 +251,12 @@ Run all tests: `npm test`
 
 <br>
 
+## License
+
+MIT
+
+<br>
+
 ---
 
 <br>
