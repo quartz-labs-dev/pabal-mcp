@@ -7,10 +7,17 @@
  * @see https://developer.apple.com/documentation/appstoreconnectapi
  */
 
-import type { components } from "./generated-types";
-
-// Schema type alias for convenience
-type Schemas = components["schemas"];
+import type {
+  App as AppModel,
+  AppInfo as AppInfoModel,
+  AppInfoLocalization as AppInfoLocalizationModel,
+  AppScreenshot as AppScreenshotModel,
+  AppScreenshotSet as AppScreenshotSetModel,
+  AppStoreVersion as AppStoreVersionModel,
+  AppStoreVersionLocalization as AppStoreVersionLocalizationModel,
+  AppStoreVersionLocalizationUpdateRequestDataAttributes,
+  AppInfoLocalizationUpdateRequestDataAttributes,
+} from "appstore-connect-sdk/openapi";
 
 // ============================================================================
 // Custom Types (not from OpenAPI)
@@ -33,13 +40,13 @@ export interface ApiResponse<T> {
 // Response Types (from OpenAPI)
 // ============================================================================
 
-export type AppStoreApp = Schemas["App"];
-export type AppInfo = Schemas["AppInfo"];
-export type AppInfoLocalization = Schemas["AppInfoLocalization"];
-export type AppStoreVersion = Schemas["AppStoreVersion"];
-export type AppStoreLocalization = Schemas["AppStoreVersionLocalization"];
-export type AppStoreScreenshotSet = Schemas["AppScreenshotSet"];
-export type AppStoreScreenshot = Schemas["AppScreenshot"];
+export type AppStoreApp = AppModel;
+export type AppInfo = AppInfoModel;
+export type AppInfoLocalization = AppInfoLocalizationModel;
+export type AppStoreVersion = AppStoreVersionModel;
+export type AppStoreLocalization = AppStoreVersionLocalizationModel;
+export type AppStoreScreenshotSet = AppScreenshotSetModel;
+export type AppStoreScreenshot = AppScreenshotModel;
 
 // ============================================================================
 // Request Attribute Types (extracted from OpenAPI)
@@ -49,14 +56,12 @@ export type AppStoreScreenshot = Schemas["AppScreenshot"];
  * App Info Localization Update Request Attributes
  * @see https://developer.apple.com/documentation/appstoreconnectapi/appinfolocalizationupdaterequest/data/attributes
  */
-export type AppInfoLocalizationUpdateAttributes = NonNullable<
-  Schemas["AppInfoLocalizationUpdateRequest"]["data"]["attributes"]
->;
+export type AppInfoLocalizationUpdateAttributes =
+  AppInfoLocalizationUpdateRequestDataAttributes;
 
 /**
  * App Store Version Localization Update Request Attributes
  * @see https://developer.apple.com/documentation/appstoreconnectapi/appstoreversionlocalizationupdaterequest/data/attributes
  */
-export type AppStoreVersionLocalizationUpdateAttributes = NonNullable<
-  Schemas["AppStoreVersionLocalizationUpdateRequest"]["data"]["attributes"]
->;
+export type AppStoreVersionLocalizationUpdateAttributes =
+  AppStoreVersionLocalizationUpdateRequestDataAttributes;

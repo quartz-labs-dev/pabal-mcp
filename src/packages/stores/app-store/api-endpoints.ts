@@ -4,6 +4,22 @@
  * Centralized API endpoint management for App Store Connect
  */
 
+import { AppStoreConnectAPI } from "appstore-connect-sdk";
+import {
+  AppsApi,
+  AppInfosApi,
+  AppInfoLocalizationsApi,
+  AppScreenshotSetsApi,
+  AppStoreVersionLocalizationsApi,
+  AppStoreVersionsApi,
+  AppsAppStoreVersionsGetToManyRelatedFilterAppStoreStateEnum,
+  AppsAppStoreVersionsGetToManyRelatedFilterPlatformEnum,
+  BaseAPI,
+  Configuration,
+  ResponseError,
+  type AppsResponse,
+} from "appstore-connect-sdk/openapi";
+import type { Platform } from "appstore-connect-sdk/openapi";
 import {
   APP_STORE_API_BASE_URL,
   APP_STORE_PLATFORM,
@@ -23,117 +39,119 @@ import type {
   AppStoreVersionLocalizationUpdateAttributes,
 } from "./types";
 
+type ApiClass<T extends BaseAPI> = new (configuration?: Configuration) => T;
+
+export type AppStoreApiAuthConfig = {
+  issuerId: string;
+  keyId: string;
+  privateKey: string;
+  expirationSeconds?: number;
+};
+
+const DEFAULT_TOKEN_EXPIRATION_SECONDS = 60 * 20;
+
 export class AppStoreApiEndpoints {
-  constructor(
-    private generateToken: () => Promise<string>,
-    private issuerId: string,
-    private keyId: string
-  ) {}
+  private sdk: AppStoreConnectAPI;
+  private apiCache = new Map<ApiClass<BaseAPI>, Promise<BaseAPI>>();
+  private issuerId: string;
+  private keyId: string;
+
+  constructor(config: AppStoreApiAuthConfig) {
+    this.issuerId = config.issuerId;
+    this.keyId = config.keyId;
+    this.sdk = new AppStoreConnectAPI({
+      issuerId: config.issuerId,
+      privateKeyId: config.keyId,
+      privateKey: config.privateKey,
+      expirationDuration:
+        config.expirationSeconds ?? DEFAULT_TOKEN_EXPIRATION_SECONDS,
+    });
+  }
 
   normalizeNextLink(nextLink?: string | null): string | null {
     if (!nextLink) return null;
     return nextLink.replace(APP_STORE_API_BASE_URL, "");
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const token = await this.generateToken();
-    const url = endpoint.startsWith("http")
-      ? endpoint
-      : `${APP_STORE_API_BASE_URL}${endpoint}`;
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ errors: [] }));
-
-      if (response.status === 401) {
-        throw new Error(
-          `App Store Connect API authentication failed (401 Unauthorized)\n` +
-            `Issuer ID: ${this.issuerId}\n` +
-            `Key ID: ${this.keyId}\n` +
-            `Error: ${JSON.stringify(error, null, 2)}`
-        );
-      }
-
-      if (response.status === 409) {
-        const errorDetails = JSON.stringify(error, null, 2);
-        if (errorDetails.includes("STATE_ERROR")) {
-          throw new Error(
-            `App Store Connect API error: 409 Conflict (STATE_ERROR)\n` +
-              `Metadata cannot be modified in current state. Please check app status.\n` +
-              `Error: ${errorDetails}`
-          );
-        }
-      }
-
-      throw new Error(
-        `App Store Connect API error: ${response.status} ${
-          response.statusText
-        }\n${JSON.stringify(error, null, 2)}`
-      );
-    }
-
-    return response.json();
-  }
-
   async listApps(
     nextUrl = `/apps?limit=${DEFAULT_APP_LIST_LIMIT}`
   ): Promise<ApiResponse<AppStoreApp[]>> {
-    return this.request<ApiResponse<AppStoreApp[]>>(nextUrl);
+    return this.requestCollection<AppsResponse>(nextUrl);
   }
 
   async findAppByBundleId(
     bundleId: string
   ): Promise<ApiResponse<AppStoreApp[]>> {
-    return this.request<ApiResponse<AppStoreApp[]>>(
-      `/apps?filter[bundleId]=${bundleId}`
-    );
+    const appsApi = await this.getApi(AppsApi);
+
+    try {
+      return await appsApi.appsGetCollection({
+        filterBundleId: [bundleId],
+      });
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async getApp(appId: string): Promise<ApiResponse<AppStoreApp>> {
-    return this.request<ApiResponse<AppStoreApp>>(`/apps/${appId}`);
+    const appsApi = await this.getApi(AppsApi);
+
+    try {
+      return await appsApi.appsGetInstance({ id: appId });
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async listAppInfos(appId: string): Promise<ApiResponse<AppInfo[]>> {
-    return this.request<ApiResponse<AppInfo[]>>(
-      `/apps/${appId}/appInfos?limit=1`
-    );
+    const appsApi = await this.getApi(AppsApi);
+
+    try {
+      return await appsApi.appsAppInfosGetToManyRelated({
+        id: appId,
+        limit: 1,
+      });
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async listAppInfoLocalizations(
     appInfoId: string,
     locale?: string
   ): Promise<ApiResponse<AppInfoLocalization[]>> {
-    const filter = locale ? `?filter[locale]=${locale}` : "";
-    return this.request<ApiResponse<AppInfoLocalization[]>>(
-      `/appInfos/${appInfoId}/appInfoLocalizations${filter}`
-    );
+    const appInfosApi = await this.getApi(AppInfosApi);
+
+    try {
+      return await appInfosApi.appInfosAppInfoLocalizationsGetToManyRelated({
+        id: appInfoId,
+        filterLocale: locale ? [locale] : undefined,
+      });
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async updateAppInfoLocalization(
     localizationId: string,
     attributes: AppInfoLocalizationUpdateAttributes
   ): Promise<void> {
-    await this.request(`/appInfoLocalizations/${localizationId}`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        data: {
-          type: "appInfoLocalizations",
-          id: localizationId,
-          attributes,
+    const appInfoLocalizationsApi = await this.getApi(AppInfoLocalizationsApi);
+
+    try {
+      await appInfoLocalizationsApi.appInfoLocalizationsUpdateInstance({
+        id: localizationId,
+        appInfoLocalizationUpdateRequest: {
+          data: {
+            type: "appInfoLocalizations",
+            id: localizationId,
+            attributes,
+          },
         },
-      }),
-    });
+      });
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async createAppInfoLocalization(
@@ -141,21 +159,25 @@ export class AppStoreApiEndpoints {
     locale: string,
     attributes: AppInfoLocalizationUpdateAttributes
   ): Promise<ApiResponse<AppInfoLocalization>> {
-    return this.request<ApiResponse<AppInfoLocalization>>(
-      `/appInfoLocalizations`,
-      {
-        method: "POST",
-        body: JSON.stringify({
+    const appInfoLocalizationsApi = await this.getApi(AppInfoLocalizationsApi);
+
+    try {
+      return await appInfoLocalizationsApi.appInfoLocalizationsCreateInstance({
+        appInfoLocalizationCreateRequest: {
           data: {
             type: "appInfoLocalizations",
             attributes: { locale, ...attributes },
             relationships: {
-              appInfo: { data: { type: "appInfos", id: appInfoId } },
+              appInfo: {
+                data: { type: "appInfos", id: appInfoId },
+              },
             },
           },
-        }),
-      }
-    );
+        },
+      });
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async listAppStoreVersions(
@@ -167,13 +189,25 @@ export class AppStoreApiEndpoints {
       state,
       limit = DEFAULT_VERSIONS_FETCH_LIMIT,
     } = options;
-    const queryParts = [`filter[platform]=${platform}`, `limit=${limit}`];
-    if (state) queryParts.push(`filter[appStoreState]=${state}`);
-    const query = queryParts.join("&");
 
-    return this.request<ApiResponse<AppStoreVersion[]>>(
-      `/apps/${appId}/appStoreVersions?${query}`
-    );
+    const appsApi = await this.getApi(AppsApi);
+
+    try {
+      return await appsApi.appsAppStoreVersionsGetToManyRelated({
+        id: appId,
+        filterPlatform: [
+          platform as AppsAppStoreVersionsGetToManyRelatedFilterPlatformEnum,
+        ],
+        filterAppStoreState: state
+          ? [
+              state as AppsAppStoreVersionsGetToManyRelatedFilterAppStoreStateEnum,
+            ]
+          : undefined,
+        limit,
+      });
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async createAppStoreVersion(
@@ -181,50 +215,95 @@ export class AppStoreApiEndpoints {
     versionString: string,
     platform = APP_STORE_PLATFORM
   ): Promise<ApiResponse<AppStoreVersion>> {
-    return this.request<ApiResponse<AppStoreVersion>>(`/appStoreVersions`, {
-      method: "POST",
-      body: JSON.stringify({
-        data: {
-          type: "appStoreVersions",
-          attributes: { platform, versionString },
-          relationships: { app: { data: { type: "apps", id: appId } } },
+    const appStoreVersionsApi = await this.getApi(AppStoreVersionsApi);
+
+    try {
+      return await appStoreVersionsApi.appStoreVersionsCreateInstance({
+        appStoreVersionCreateRequest: {
+          data: {
+            type: "appStoreVersions",
+            attributes: {
+              platform: platform as Platform,
+              versionString,
+            },
+            relationships: {
+              app: { data: { type: "apps", id: appId } },
+            },
+          },
         },
-      }),
-    });
+      });
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async listAppStoreVersionLocalizations(
     versionId: string,
     locale?: string
   ): Promise<ApiResponse<AppStoreLocalization[]>> {
-    const filter = locale ? `?filter[locale]=${locale}` : "";
-    return this.request<ApiResponse<AppStoreLocalization[]>>(
-      `/appStoreVersions/${versionId}/appStoreVersionLocalizations${filter}`
-    );
+    const appStoreVersionsApi = await this.getApi(AppStoreVersionsApi);
+
+    try {
+      const response =
+        await appStoreVersionsApi.appStoreVersionsAppStoreVersionLocalizationsGetToManyRelated(
+          {
+            id: versionId,
+          }
+        );
+
+      if (!locale) return response;
+
+      return {
+        ...response,
+        data: (response.data || []).filter(
+          (localization) => localization.attributes?.locale === locale
+        ),
+      };
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async getAppStoreVersionLocalization(
     localizationId: string
   ): Promise<ApiResponse<AppStoreLocalization>> {
-    return this.request<ApiResponse<AppStoreLocalization>>(
-      `/appStoreVersionLocalizations/${localizationId}`
+    const appStoreVersionLocalizationsApi = await this.getApi(
+      AppStoreVersionLocalizationsApi
     );
+
+    try {
+      return await appStoreVersionLocalizationsApi.appStoreVersionLocalizationsGetInstance(
+        { id: localizationId }
+      );
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async updateAppStoreVersionLocalization(
     localizationId: string,
     attributes: AppStoreVersionLocalizationUpdateAttributes
   ): Promise<void> {
-    await this.request(`/appStoreVersionLocalizations/${localizationId}`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        data: {
-          type: "appStoreVersionLocalizations",
+    const appStoreVersionLocalizationsApi = await this.getApi(
+      AppStoreVersionLocalizationsApi
+    );
+
+    try {
+      await appStoreVersionLocalizationsApi.appStoreVersionLocalizationsUpdateInstance(
+        {
           id: localizationId,
-          attributes,
-        },
-      }),
-    });
+          appStoreVersionLocalizationUpdateRequest: {
+            data: {
+              type: "appStoreVersionLocalizations",
+              id: localizationId,
+              attributes,
+            },
+          },
+        }
+      );
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async createAppStoreVersionLocalization(
@@ -232,38 +311,138 @@ export class AppStoreApiEndpoints {
     locale: string,
     attributes: AppStoreVersionLocalizationUpdateAttributes
   ): Promise<ApiResponse<AppStoreLocalization>> {
-    return this.request<ApiResponse<AppStoreLocalization>>(
-      `/appStoreVersionLocalizations`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          data: {
-            type: "appStoreVersionLocalizations",
-            attributes: { locale, ...attributes },
-            relationships: {
-              appStoreVersion: {
-                data: { type: "appStoreVersions", id: versionId },
+    const appStoreVersionLocalizationsApi = await this.getApi(
+      AppStoreVersionLocalizationsApi
+    );
+
+    try {
+      return await appStoreVersionLocalizationsApi.appStoreVersionLocalizationsCreateInstance(
+        {
+          appStoreVersionLocalizationCreateRequest: {
+            data: {
+              type: "appStoreVersionLocalizations",
+              attributes: { locale, ...attributes },
+              relationships: {
+                appStoreVersion: {
+                  data: { type: "appStoreVersions", id: versionId },
+                },
               },
             },
           },
-        }),
-      }
-    );
+        }
+      );
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async listScreenshotSets(
     localizationId: string
   ): Promise<ApiResponse<AppStoreScreenshotSet[]>> {
-    return this.request<ApiResponse<AppStoreScreenshotSet[]>>(
-      `/appStoreVersionLocalizations/${localizationId}/appScreenshotSets`
+    const appStoreVersionLocalizationsApi = await this.getApi(
+      AppStoreVersionLocalizationsApi
     );
+
+    try {
+      return await appStoreVersionLocalizationsApi.appStoreVersionLocalizationsAppScreenshotSetsGetToManyRelated(
+        { id: localizationId }
+      );
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
   }
 
   async listScreenshots(
     screenshotSetId: string
   ): Promise<ApiResponse<AppStoreScreenshot[]>> {
-    return this.request<ApiResponse<AppStoreScreenshot[]>>(
-      `/appScreenshotSets/${screenshotSetId}/appScreenshots`
-    );
+    const appScreenshotSetsApi = await this.getApi(AppScreenshotSetsApi);
+
+    try {
+      return await appScreenshotSetsApi.appScreenshotSetsAppScreenshotsGetToManyRelated(
+        { id: screenshotSetId }
+      );
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
+  }
+
+  private async getApi<T extends BaseAPI>(apiClass: ApiClass<T>): Promise<T> {
+    if (!this.apiCache.has(apiClass)) {
+      this.apiCache.set(apiClass, this.sdk.create(apiClass));
+    }
+
+    return this.apiCache.get(apiClass)! as Promise<T>;
+  }
+
+  private normalizeEndpoint(endpoint: string): string {
+    if (endpoint.startsWith("http")) return endpoint;
+    if (endpoint.startsWith("/v1/")) return endpoint;
+    if (endpoint.startsWith("/")) return `/v1${endpoint}`;
+    return `/v1/${endpoint}`;
+  }
+
+  private async requestCollection<T>(endpoint: string): Promise<T> {
+    try {
+      const response = await this.sdk.request(
+        endpoint.startsWith("http")
+          ? { url: endpoint }
+          : { path: this.normalizeEndpoint(endpoint) }
+      );
+      return (await response.json()) as T;
+    } catch (error) {
+      return await this.handleSdkError(error);
+    }
+  }
+
+  private formatErrorPayload(payload: unknown): string {
+    if (!payload) return "";
+    if (typeof payload === "string") return payload;
+    try {
+      return JSON.stringify(payload, null, 2);
+    } catch {
+      return String(payload);
+    }
+  }
+
+  private async handleSdkError(error: unknown): Promise<never> {
+    if (error instanceof ResponseError) {
+      let errorBody: unknown = null;
+      try {
+        errorBody = await error.response.json();
+      } catch {
+        // ignore JSON parse errors for error bodies
+      }
+
+      if (error.response.status === 401) {
+        throw new Error(
+          `App Store Connect API authentication failed (401 Unauthorized)\n` +
+            `Issuer ID: ${this.issuerId}\n` +
+            `Key ID: ${this.keyId}\n` +
+            `Error: ${this.formatErrorPayload(errorBody)}`
+        );
+      }
+
+      if (error.response.status === 409) {
+        const errorDetails = this.formatErrorPayload(errorBody);
+        if (errorDetails.includes("STATE_ERROR")) {
+          throw new Error(
+            `App Store Connect API error: 409 Conflict (STATE_ERROR)\n` +
+              `Metadata cannot be modified in current state. Please check app status.\n` +
+              `Error: ${errorDetails}`
+          );
+        }
+      }
+
+      const statusText = error.response.statusText || "Unknown Error";
+      throw new Error(
+        `App Store Connect API error: ${error.response.status} ${statusText}\n${this.formatErrorPayload(errorBody)}`
+      );
+    }
+
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error(String(error));
   }
 }

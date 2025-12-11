@@ -195,8 +195,9 @@ export function sortReleaseNotes(
       id: note.versionString,
       attributes: {
         versionString: note.versionString,
-        platform: note.platform as "IOS" | "MAC_OS" | "TV_OS" | "VISION_OS",
+        platform: note.platform as unknown as "IOS" | "MAC_OS" | "TV_OS",
       },
+      links: { self: note.versionString },
     }))
   );
 

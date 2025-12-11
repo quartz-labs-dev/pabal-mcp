@@ -5,7 +5,6 @@
  * API Documentation: https://developer.apple.com/documentation/appstoreconnectapi
  */
 
-import { createAppStoreJWT } from "./auth";
 import type {
   AppStoreAsoData,
   AppStoreMultilingualAsoData,
@@ -40,32 +39,23 @@ export class AppStoreClient {
   constructor(config: AppStoreClientConfig) {
     this.issuerId = config.issuerId;
     this.keyId = config.keyId;
-    this.privateKey = config.privateKey;
+    this.privateKey = this.normalizePrivateKey(config.privateKey);
     this.bundleId = config.bundleId;
-    this.apiEndpoints = new AppStoreApiEndpoints(
-      () => this.generateToken(),
-      this.issuerId,
-      this.keyId
-    );
+    this.apiEndpoints = new AppStoreApiEndpoints({
+      issuerId: this.issuerId,
+      keyId: this.keyId,
+      privateKey: this.privateKey,
+    });
   }
 
-  private async generateToken(): Promise<string> {
-    if (!this.privateKey || !this.privateKey.includes("BEGIN PRIVATE KEY")) {
+  private normalizePrivateKey(rawKey: string): string {
+    if (!rawKey || !rawKey.includes("BEGIN PRIVATE KEY")) {
       throw new Error(
         "Invalid Private Key format. PEM format private key is required."
       );
     }
 
-    const normalizedKey = this.privateKey.replace(/\\n/g, "\n").trim();
-
-    return await createAppStoreJWT(
-      {
-        issuerId: this.issuerId,
-        keyId: this.keyId,
-        privateKey: normalizedKey,
-      },
-      { expirationSeconds: 1200 }
-    );
+    return rawKey.replace(/\\n/g, "\n").trim();
   }
 
   /**

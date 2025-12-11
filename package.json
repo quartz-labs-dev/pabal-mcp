@@ -50,6 +50,7 @@
   "homepage": "https://github.com/quartz-labs-dev/pabal-mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.22.0",
+    "appstore-connect-sdk": "^1.3.2",
     "googleapis": "^144.0.0",
     "jose": "^6.1.2",
     "zod": "^3.25.76"
