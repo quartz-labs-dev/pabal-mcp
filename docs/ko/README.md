@@ -1,8 +1,8 @@
-![Cover](../public/cover.gif)
+![Cover](../../public/cover.gif)
 
 [![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=pabal-mcp&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsInBhYmFsLW1jcCJdfQ%3D%3D)
 
-[![English docs](https://img.shields.io/badge/docs-English-blue)](../README.md)
+[![English docs](https://img.shields.io/badge/docs-English-blue)](../en/README.md)
 
 # pabal-mcp — App Store / Play Store ASO용 MCP 서버
 
@@ -249,7 +249,7 @@ yarn dev:mcp
 
 ASO와 SEO를 함께 관리하고 싶으신가요? **Pabal Web**을 확인해보세요.
 
-[![Pabal Web](../public/pabal-web.png)](https://pabal.quartz.best/)
+[![Pabal Web](../../public/pabal-web.png)](https://pabal.quartz.best/)
 
 **Pabal Web**은 Next.js 기반의 웹 인터페이스로, ASO, SEO, Google Search Console 인덱싱 등을 통합 관리할 수 있는 완전한 솔루션입니다.
 
