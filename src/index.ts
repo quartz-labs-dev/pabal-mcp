@@ -13,6 +13,19 @@ import { handleAsoPullReleaseNotes } from "./tools/release/pull-notes";
 import { handleUpdateNotes } from "./tools/release/update-notes";
 import { handleCheckLatestVersions } from "./tools/release/check-versions";
 
+// Redirect console.log and console.info to stderr
+// This prevents third-party libraries (like appstore-connect-sdk) from corrupting
+// the stdout JSON-RPC stream required by strict MCP clients (like Antigravity).
+const originalLog = console.log;
+const originalInfo = console.info;
+
+console.log = function (...args) {
+  console.error(...args);
+};
+console.info = function (...args) {
+  console.error(...args);
+};
+
 // MCP config sets cwd to project root, so we don't need to chdir
 // Just verify we're in the right place
 console.error(`[MCP] 📂 Working directory: ${process.cwd()}`);
