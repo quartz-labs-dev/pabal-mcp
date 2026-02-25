@@ -135,7 +135,7 @@ export function saveAsoData(
         filePath,
         JSON.stringify({ googlePlay: asoData.googlePlay }, null, 2)
       );
-      console.log(`💾 Google Play data saved to ${filePath}`);
+      console.error(`💾 Google Play data saved to ${filePath}`);
     }
 
     if (asoData.appStore) {
@@ -146,7 +146,7 @@ export function saveAsoData(
         filePath,
         JSON.stringify({ appStore: asoData.appStore }, null, 2)
       );
-      console.log(`💾 App Store data saved to ${filePath}`);
+      console.error(`💾 App Store data saved to ${filePath}`);
     }
   } catch (error) {
     throw AppError.io(

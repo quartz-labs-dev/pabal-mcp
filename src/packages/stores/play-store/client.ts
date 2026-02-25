@@ -141,7 +141,7 @@ export class GooglePlayClient {
       const listingsResponse = await this.listListings(session);
 
       const allListings = listingsResponse.data.listings || [];
-      console.log(
+      console.error(
         `🌍 Found ${allListings.length} Google Play languages: ${allListings
           .map((l: any) => l.language)
           .join(", ")}`

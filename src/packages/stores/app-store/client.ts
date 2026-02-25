@@ -286,7 +286,7 @@ export class AppStoreClient {
     );
 
     const allLocalizations = localizationsResponse.data || [];
-    console.log(
+    console.error(
       `🌍 Found ${
         allLocalizations.length
       } App Store localizations: ${allLocalizations
@@ -467,7 +467,7 @@ export class AppStoreClient {
     );
 
     if (existing) {
-      console.log(`⚠️  Version ${versionString} already exists.`);
+      console.error(`⚠️  Version ${versionString} already exists.`);
       return existing;
     }
 
@@ -477,7 +477,7 @@ export class AppStoreClient {
       APP_STORE_PLATFORM
     );
 
-    console.log(`✅ Created new version: ${versionString}`);
+    console.error(`✅ Created new version: ${versionString}`);
     return createResponse.data;
   }
 
@@ -492,13 +492,13 @@ export class AppStoreClient {
       const latestVersion = await this.getLatestVersion();
       if (!latestVersion) {
         newVersionString = "1.0.0";
-        console.log(
+        console.error(
           `📦 No existing versions. Starting with ${newVersionString}`
         );
       } else {
         const latest = latestVersion.attributes?.versionString ?? "0.0.0";
         newVersionString = this.incrementVersion(latest);
-        console.log(`📦 Latest: ${latest} → New: ${newVersionString}`);
+        console.error(`📦 Latest: ${latest} → New: ${newVersionString}`);
       }
     }
 
@@ -528,7 +528,7 @@ export class AppStoreClient {
       });
     }
 
-    console.log(`✅ Updated What's New for ${locale}`);
+    console.error(`✅ Updated What's New for ${locale}`);
   }
 
   async pullReleaseNotes(): Promise<AppStoreReleaseNote[]> {
