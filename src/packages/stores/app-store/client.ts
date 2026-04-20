@@ -5,6 +5,16 @@
  * API Documentation: https://developer.apple.com/documentation/appstoreconnectapi
  */
 
+import {
+  closeSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  statSync,
+  unlinkSync,
+} from "node:fs";
+import { basename, dirname, join } from "node:path";
 import { AppStoreConnectAPI } from "appstore-connect-sdk";
 import {
   AppsApi,
@@ -28,6 +38,7 @@ import type {
   AppStoreReleaseNote,
 } from "@/packages/configs/aso-config/types";
 import { DEFAULT_LOCALE } from "@/packages/configs/aso-config/constants";
+import { getAsoDir } from "@/packages/configs/aso-config/utils";
 import {
   convertToAsoData,
   convertToMultilingualAsoData,
@@ -871,8 +882,6 @@ export class AppStoreClient {
     locale: string;
   }): Promise<void> {
     const { imagePath, screenshotDisplayType, locale } = options;
-    const { readFileSync, statSync } = await import("node:fs");
-    const { basename } = await import("node:path");
 
     try {
       // Get app and version info
@@ -1130,19 +1139,115 @@ export class AppStoreClient {
 
     let deletedCount = 0;
     for (const screenshot of screenshots) {
-      try {
-        await this.deleteScreenshot(screenshot.id);
-        deletedCount++;
-      } catch (error) {
-        console.error(
-          `[AppStore] Warning: Failed to delete screenshot ${screenshot.id}: ${
-            error instanceof Error ? error.message : String(error)
-          }`
-        );
-      }
+      await this.deleteScreenshot(screenshot.id);
+      deletedCount++;
     }
 
     return deletedCount;
+  }
+
+  private sanitizePathSegment(value: string): string {
+    return value.replace(/[^a-zA-Z0-9._-]/g, "_");
+  }
+
+  private getScreenshotLockPath(locale: string, displayType: string): string {
+    const appIdSegment = this.sanitizePathSegment(this.bundleId);
+    const localeSegment = this.sanitizePathSegment(locale);
+    const displayTypeSegment = this.sanitizePathSegment(displayType);
+    return join(
+      getAsoDir(),
+      "locks",
+      "screenshots",
+      "app-store",
+      appIdSegment,
+      localeSegment,
+      `${displayTypeSegment}.lock`
+    );
+  }
+
+  private acquireScreenshotUploadLock(lockPath: string): () => void {
+    mkdirSync(dirname(lockPath), { recursive: true });
+
+    let descriptor: number;
+    try {
+      descriptor = openSync(lockPath, "wx");
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === "EEXIST") {
+        throw new Error(
+          `Screenshot upload lock is already held (${lockPath}). Another upload is running for this locale/display type.`
+        );
+      }
+      throw error;
+    }
+
+    closeSync(descriptor);
+
+    return () => {
+      try {
+        unlinkSync(lockPath);
+      } catch {
+        // Ignore lock cleanup failures.
+      }
+    };
+  }
+
+  private preflightScreenshotBatch(
+    locale: string,
+    byDisplayType: Map<string, Array<{ path: string; filename: string }>>
+  ): void {
+    for (const [displayType, screenshotList] of byDisplayType) {
+      if (screenshotList.length === 0) {
+        throw new Error(
+          `Preflight failed for ${locale}/${displayType}: empty screenshot list`
+        );
+      }
+
+      const seenPaths = new Set<string>();
+      const seenFileNames = new Set<string>();
+
+      for (const screenshot of screenshotList) {
+        if (!existsSync(screenshot.path)) {
+          throw new Error(
+            `Preflight failed for ${locale}/${displayType}: file not found (${screenshot.path})`
+          );
+        }
+
+        const fileStat = statSync(screenshot.path);
+        if (!fileStat.isFile()) {
+          throw new Error(
+            `Preflight failed for ${locale}/${displayType}: not a file (${screenshot.path})`
+          );
+        }
+
+        if (fileStat.size <= 0) {
+          throw new Error(
+            `Preflight failed for ${locale}/${displayType}: empty file (${screenshot.path})`
+          );
+        }
+
+        if (!screenshot.filename.trim()) {
+          throw new Error(
+            `Preflight failed for ${locale}/${displayType}: empty filename (${screenshot.path})`
+          );
+        }
+
+        if (seenPaths.has(screenshot.path)) {
+          throw new Error(
+            `Preflight failed for ${locale}/${displayType}: duplicate file path (${screenshot.path})`
+          );
+        }
+        seenPaths.add(screenshot.path);
+
+        const normalizedFileName = screenshot.filename.trim().toLowerCase();
+        if (seenFileNames.has(normalizedFileName)) {
+          throw new Error(
+            `Preflight failed for ${locale}/${displayType}: duplicate filename (${screenshot.filename})`
+          );
+        }
+        seenFileNames.add(normalizedFileName);
+      }
+    }
   }
 
   /**
@@ -1164,8 +1269,6 @@ export class AppStoreClient {
     failed: number;
   }> {
     const { locale, screenshots } = options;
-    const { readFileSync, statSync, existsSync } = await import("node:fs");
-    const { basename } = await import("node:path");
 
     const result = { uploaded: 0, deleted: 0, failed: 0 };
 
@@ -1216,75 +1319,83 @@ export class AppStoreClient {
         });
       }
 
+      this.preflightScreenshotBatch(locale, byDisplayType);
+
       // Process each display type
       for (const [displayType, screenshotList] of byDisplayType) {
-        console.error(
-          `[AppStore]     Processing ${displayType} (${screenshotList.length} screenshots)...`
+        const releaseLock = this.acquireScreenshotUploadLock(
+          this.getScreenshotLockPath(locale, displayType)
         );
 
-        // Find or create screenshot set
-        const screenshotSetId = await this.findOrCreateScreenshotSet(
-          localizationId,
-          displayType
-        );
-
-        // Delete existing screenshots in this set
-        const deletedCount =
-          await this.deleteAllScreenshotsInSet(screenshotSetId);
-        if (deletedCount > 0) {
+        try {
           console.error(
-            `[AppStore]       🗑️  Deleted ${deletedCount} existing screenshots`
+            `[AppStore]     Processing ${displayType} (${screenshotList.length} screenshots)...`
           );
-          result.deleted += deletedCount;
-        }
 
-        // Upload new screenshots in order
-        for (const screenshot of screenshotList) {
-          if (!existsSync(screenshot.path)) {
+          // Find or create screenshot set
+          const screenshotSetId = await this.findOrCreateScreenshotSet(
+            localizationId,
+            displayType
+          );
+
+          // Delete existing screenshots in this set
+          const deletedCount =
+            await this.deleteAllScreenshotsInSet(screenshotSetId);
+          if (deletedCount > 0) {
             console.error(
-              `[AppStore]       ⚠️  File not found: ${screenshot.filename}`
+              `[AppStore]       Deleted ${deletedCount} existing screenshots`
             );
-            result.failed++;
-            continue;
+            result.deleted += deletedCount;
           }
 
-          try {
-            const fileBuffer = readFileSync(screenshot.path);
-            const fileSize = statSync(screenshot.path).size;
+          // Upload new screenshots in order
+          for (const screenshot of screenshotList) {
+            try {
+              const fileBuffer = readFileSync(screenshot.path);
+              const fileSize = statSync(screenshot.path).size;
 
-            // Create screenshot with upload operation
-            const screenshotData = await this.createAppScreenshot(
-              screenshotSetId,
-              screenshot.filename,
-              fileSize
-            );
+              // Create screenshot with upload operation
+              const screenshotData = await this.createAppScreenshot(
+                screenshotSetId,
+                screenshot.filename,
+                fileSize
+              );
 
-            // Upload file
-            if (
-              screenshotData.uploadOperations &&
-              screenshotData.uploadOperations.length > 0
-            ) {
-              const uploadOp = screenshotData.uploadOperations[0];
-              await this.uploadFileToUrl(
-                uploadOp.url,
-                fileBuffer,
-                uploadOp.method
+              // Upload file
+              if (
+                screenshotData.uploadOperations &&
+                screenshotData.uploadOperations.length > 0
+              ) {
+                const uploadOp = screenshotData.uploadOperations[0];
+                await this.uploadFileToUrl(
+                  uploadOp.url,
+                  fileBuffer,
+                  uploadOp.method
+                );
+              }
+
+              // Commit screenshot
+              await this.commitAppScreenshot(screenshotData.id);
+              console.error(`[AppStore]       ✅ ${screenshot.filename}`);
+              result.uploaded++;
+            } catch (error) {
+              result.failed++;
+              throw new Error(
+                `[${displayType}] ${screenshot.filename}: ${
+                  error instanceof Error ? error.message : String(error)
+                }`
               );
             }
-
-            // Commit screenshot
-            await this.commitAppScreenshot(screenshotData.id);
-            console.error(`[AppStore]       ✅ ${screenshot.filename}`);
-            result.uploaded++;
-          } catch (error) {
-            console.error(
-              `[AppStore]       ❌ ${screenshot.filename}: ${
-                error instanceof Error ? error.message : String(error)
-              }`
-            );
-            result.failed++;
           }
+        } finally {
+          releaseLock();
         }
+      }
+
+      if (result.failed > 0) {
+        throw new Error(
+          `Screenshot upload completed with ${result.failed} failed files`
+        );
       }
 
       return result;

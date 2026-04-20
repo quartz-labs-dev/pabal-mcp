@@ -456,6 +456,12 @@ export class AppStoreService {
               screenshots: screenshotsToUpload,
             });
 
+            if (uploadResult.failed > 0) {
+              throw new Error(
+                `Screenshot upload reported ${uploadResult.failed} failed files`
+              );
+            }
+
             console.error(
               `[AppStore]   ✅ Screenshots for ${locale}: ${uploadResult.uploaded} uploaded, ${uploadResult.deleted} deleted, ${uploadResult.failed} failed`
             );
@@ -486,6 +492,9 @@ export class AppStoreService {
         if (failedLocales.length > 0) {
           console.error(
             `[AppStore]     ❌ Failed: ${failedLocales.join(", ")}`
+          );
+          throw new Error(
+            `Screenshot upload failed for locales: ${failedLocales.join(", ")}`
           );
         }
       }
