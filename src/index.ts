@@ -280,6 +280,18 @@ registerToolWithInfo(
         .boolean()
         .optional()
         .describe("Whether to upload images as well"),
+      locales: z
+        .array(z.string())
+        .optional()
+        .describe(
+          "Optional locale allowlist to push (e.g. ['en-US', 'ko-KR'])"
+        ),
+      imageUploadTimeoutMs: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe("Per-image upload timeout in milliseconds"),
       dryRun: z
         .boolean()
         .optional()

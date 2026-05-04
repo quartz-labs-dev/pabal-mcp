@@ -24,11 +24,19 @@ interface AsoPushOptions {
   bundleId?: string; // For App Store
   store?: StoreType;
   uploadImages?: boolean;
+  locales?: string[];
+  imageUploadTimeoutMs?: number;
   dryRun?: boolean;
 }
 
 export async function handleAsoPush(options: AsoPushOptions) {
-  const { store = "both", uploadImages = false, dryRun = false } = options;
+  const {
+    store = "both",
+    uploadImages = false,
+    locales,
+    imageUploadTimeoutMs,
+    dryRun = false,
+  } = options;
 
   const resolved = appResolutionService.resolve({
     slug: options.app,
@@ -56,6 +64,10 @@ export async function handleAsoPush(options: AsoPushOptions) {
   if (packageName) console.error(`[MCP]   Package Name: ${packageName}`);
   if (bundleId) console.error(`[MCP]   Bundle ID: ${bundleId}`);
   console.error(`[MCP]   Upload Images: ${uploadImages ? "Yes" : "No"}`);
+  if (locales?.length) console.error(`[MCP]   Locales: ${locales.join(", ")}`);
+  if (imageUploadTimeoutMs) {
+    console.error(`[MCP]   Image Upload Timeout: ${imageUploadTimeoutMs}ms`);
+  }
   console.error(`[MCP]   Mode: ${dryRun ? "Dry run" : "Actual push"}`);
 
   let config;
@@ -184,6 +196,8 @@ export async function handleAsoPush(options: AsoPushOptions) {
         localAsoData: configData,
         googlePlayDataPath,
         uploadImages,
+        locales,
+        imageUploadTimeoutMs,
         slug,
       });
       results.push(formatPushResult("Google Play", result));
@@ -201,6 +215,8 @@ export async function handleAsoPush(options: AsoPushOptions) {
         localAsoData: configData,
         appStoreDataPath,
         uploadImages,
+        locales,
+        imageUploadTimeoutMs,
         slug,
       });
       results.push(formatPushResult("App Store", appStoreResult));

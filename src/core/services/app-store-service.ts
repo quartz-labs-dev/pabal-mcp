@@ -39,6 +39,23 @@ interface AppStoreAppInfo {
   supportedLocales?: string[];
 }
 
+export function resolveAppStoreLocales(
+  allLocales: string[],
+  requestedLocales?: string[]
+): { localesToPush: string[]; missingLocales: string[] } {
+  if (!requestedLocales?.length) {
+    return { localesToPush: allLocales, missingLocales: [] };
+  }
+
+  const requested = new Set(requestedLocales);
+  return {
+    localesToPush: allLocales.filter((locale) => requested.has(locale)),
+    missingLocales: requestedLocales.filter(
+      (locale) => !allLocales.includes(locale)
+    ),
+  };
+}
+
 /**
  * App Store-facing service layer that wraps client creation and common operations.
  * Keeps MCP tools independent from client factories and SDK details.
@@ -290,6 +307,8 @@ export class AppStoreService {
     localAsoData,
     appStoreDataPath,
     uploadImages = false,
+    locales,
+    imageUploadTimeoutMs,
     slug,
   }: {
     config: EnvConfig;
@@ -297,6 +316,8 @@ export class AppStoreService {
     localAsoData: AsoData;
     appStoreDataPath: string;
     uploadImages?: boolean;
+    locales?: string[];
+    imageUploadTimeoutMs?: number;
     slug?: string;
   }): Promise<PushAsoResult> {
     const skip = checkPushPrerequisites({
@@ -318,10 +339,31 @@ export class AppStoreService {
 
     try {
       // Push locale data (supportUrl/marketingUrl already set by prepareAsoDataForPush)
-      const localesToPush = Object.keys(appStoreData.locales);
+      const allLocales = Object.keys(appStoreData.locales);
+      const { localesToPush, missingLocales } = resolveAppStoreLocales(
+        allLocales,
+        locales
+      );
+      if (missingLocales.length) {
+        console.error(
+          `[AppStore]   ⚠️  Requested locale(s) not found in local ASO data: ${missingLocales.join(", ")}`
+        );
+      }
+
+      if (localesToPush.length === 0) {
+        return {
+          success: false,
+          error: AppError.validation(
+            ERROR_CODES.APP_STORE_ASO_DATA_EMPTY,
+            "No matching App Store locales found to push"
+          ),
+        };
+      }
+
       const failedFieldsList: { locale: string; fields: string[] }[] = [];
 
-      for (const [locale, localeData] of Object.entries(appStoreData.locales)) {
+      for (const locale of localesToPush) {
+        const localeData = appStoreData.locales[locale];
         console.error(`[AppStore]   📤 Pushing ${locale}...`);
         const localeResult = await client.pushAsoData(localeData);
         if (localeResult.failedFields && localeResult.failedFields.length > 0) {
@@ -454,6 +496,7 @@ export class AppStoreService {
             const uploadResult = await client.uploadScreenshotsForLocale({
               locale,
               screenshots: screenshotsToUpload,
+              imageUploadTimeoutMs,
             });
 
             if (uploadResult.failed > 0) {
@@ -552,7 +595,6 @@ export class AppStoreService {
           const version = await client.createNewVersionWithAutoIncrement();
           const versionId = version.id;
           const versionString = version.attributes?.versionString ?? "";
-          const locales = Object.keys(appStoreData.locales);
 
           console.error(
             `[AppStore]   ✅ New version ${versionString} created.`
@@ -568,7 +610,7 @@ export class AppStoreService {
             versionInfo: {
               versionId,
               versionString,
-              locales,
+              locales: Object.keys(appStoreData.locales),
             },
           };
         } catch (versionError) {

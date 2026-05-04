@@ -880,8 +880,10 @@ export class AppStoreClient {
     imagePath: string;
     screenshotDisplayType: string;
     locale: string;
+    imageUploadTimeoutMs?: number;
   }): Promise<void> {
-    const { imagePath, screenshotDisplayType, locale } = options;
+    const { imagePath, screenshotDisplayType, locale, imageUploadTimeoutMs } =
+      options;
 
     try {
       // Get app and version info
@@ -936,7 +938,12 @@ export class AppStoreClient {
         screenshot.uploadOperations.length > 0
       ) {
         const uploadOp = screenshot.uploadOperations[0];
-        await this.uploadFileToUrl(uploadOp.url, fileBuffer, uploadOp.method);
+        await this.uploadFileToUrl(
+          uploadOp.url,
+          fileBuffer,
+          uploadOp.method,
+          imageUploadTimeoutMs
+        );
       }
 
       // Step 4: Commit screenshot
@@ -1057,7 +1064,8 @@ export class AppStoreClient {
   private async uploadFileToUrl(
     url: string,
     fileBuffer: Buffer,
-    method: string = "PUT"
+    method: string = "PUT",
+    timeoutMs?: number
   ): Promise<void> {
     const https = await import("node:https");
     const { URL } = await import("node:url");
@@ -1084,6 +1092,11 @@ export class AppStoreClient {
       });
 
       req.on("error", reject);
+      if (timeoutMs) {
+        req.setTimeout(timeoutMs, () => {
+          req.destroy(new Error(`Upload timed out after ${timeoutMs}ms`));
+        });
+      }
       req.write(fileBuffer);
       req.end();
     });
@@ -1263,12 +1276,13 @@ export class AppStoreClient {
       displayType: string;
       filename: string;
     }>;
+    imageUploadTimeoutMs?: number;
   }): Promise<{
     uploaded: number;
     deleted: number;
     failed: number;
   }> {
-    const { locale, screenshots } = options;
+    const { locale, screenshots, imageUploadTimeoutMs } = options;
 
     const result = { uploaded: 0, deleted: 0, failed: 0 };
 
@@ -1370,7 +1384,8 @@ export class AppStoreClient {
                 await this.uploadFileToUrl(
                   uploadOp.url,
                   fileBuffer,
-                  uploadOp.method
+                  uploadOp.method,
+                  imageUploadTimeoutMs
                 );
               }
 

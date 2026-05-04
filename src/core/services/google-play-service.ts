@@ -36,6 +36,23 @@ interface GooglePlayAppInfo {
   supportedLocales?: string[];
 }
 
+export function resolveGooglePlayLocales(
+  allLocales: string[],
+  requestedLocales?: string[]
+): { localesToPush: string[]; missingLocales: string[] } {
+  if (!requestedLocales?.length) {
+    return { localesToPush: allLocales, missingLocales: [] };
+  }
+
+  const requested = new Set(requestedLocales);
+  return {
+    localesToPush: allLocales.filter((locale) => requested.has(locale)),
+    missingLocales: requestedLocales.filter(
+      (locale) => !allLocales.includes(locale)
+    ),
+  };
+}
+
 /**
  * Google Play-facing service layer that wraps client creation and common operations.
  * Keeps MCP tools independent from client factories and SDK details.
@@ -258,6 +275,8 @@ export class GooglePlayService {
     localAsoData,
     googlePlayDataPath,
     uploadImages = false,
+    locales,
+    imageUploadTimeoutMs,
     slug,
   }: {
     config: EnvConfig;
@@ -265,6 +284,8 @@ export class GooglePlayService {
     localAsoData: AsoData;
     googlePlayDataPath: string;
     uploadImages?: boolean;
+    locales?: string[];
+    imageUploadTimeoutMs?: number;
     slug?: string;
   }): Promise<PushAsoResult> {
     const skip = checkPushPrerequisites({
@@ -286,14 +307,41 @@ export class GooglePlayService {
     console.error(`[MCP]     Package: ${packageName}`);
 
     try {
-      const localesToPush = Object.keys(googlePlayData.locales);
+      const allLocales = Object.keys(googlePlayData.locales);
+      const { localesToPush, missingLocales } = resolveGooglePlayLocales(
+        allLocales,
+        locales
+      );
+      if (missingLocales.length) {
+        console.error(
+          `[GooglePlay]   ⚠️  Requested locale(s) not found in local ASO data: ${missingLocales.join(", ")}`
+        );
+      }
+
+      if (localesToPush.length === 0) {
+        return {
+          success: false,
+          error: AppError.validation(
+            ERROR_CODES.GOOGLE_PLAY_ASO_DATA_EMPTY,
+            "No matching Google Play locales found to push"
+          ),
+        };
+      }
 
       for (const locale of localesToPush) {
         console.error(`[GooglePlay]   📤 Preparing locale: ${locale}`);
       }
 
       // Push locale data as-is from aso-data.json
-      await client.pushMultilingualAsoData(googlePlayData);
+      await client.pushMultilingualAsoData({
+        ...googlePlayData,
+        locales: Object.fromEntries(
+          localesToPush.map((locale) => [
+            locale,
+            googlePlayData.locales[locale],
+          ])
+        ),
+      });
 
       // Push app-level contact information
       if (googlePlayData.contactEmail || googlePlayData.contactWebsite) {
@@ -416,6 +464,7 @@ export class GooglePlayService {
               sevenInchScreenshots: screenshots.phone,
               tenInchScreenshots: screenshots.tablet,
               featureGraphic: screenshots.featureGraphic || undefined,
+              imageUploadTimeoutMs,
             });
 
             console.error(

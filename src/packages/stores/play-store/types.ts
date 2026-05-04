@@ -144,6 +144,7 @@ export interface BatchUploadScreenshotsOptions {
   sevenInchScreenshots?: string[];
   tenInchScreenshots?: string[];
   featureGraphic?: string;
+  imageUploadTimeoutMs?: number;
 }
 
 /**

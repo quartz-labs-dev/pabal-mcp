@@ -908,6 +908,7 @@ export class GooglePlayClient {
       sevenInchScreenshots = [],
       tenInchScreenshots = [],
       featureGraphic,
+      imageUploadTimeoutMs,
     } = options;
 
     const authClient = await this.auth.getClient();
@@ -1004,17 +1005,13 @@ export class GooglePlayClient {
         }
         const imageBuffer = readFileSync(imagePath);
         const fileName = imagePath.split("/").pop() || `phone-${i + 1}.png`;
-        await this.androidPublisher.edits.images.upload({
-          auth: session.auth,
-          packageName: session.packageName,
-          editId: session.editId,
+        await this.uploadImageWithOptionalTimeout(
+          session,
           language,
-          imageType: "phoneScreenshots",
-          media: {
-            mimeType: "image/png",
-            body: imageBuffer,
-          },
-        });
+          "phoneScreenshots",
+          imageBuffer,
+          imageUploadTimeoutMs
+        );
         console.error(`[GooglePlayClient]   ✅ Uploaded ${fileName}`);
         result.uploaded.phoneScreenshots++;
       }
@@ -1030,17 +1027,13 @@ export class GooglePlayClient {
         }
         const imageBuffer = readFileSync(imagePath);
         const fileName = imagePath.split("/").pop() || `tablet7-${i + 1}.png`;
-        await this.androidPublisher.edits.images.upload({
-          auth: session.auth,
-          packageName: session.packageName,
-          editId: session.editId,
+        await this.uploadImageWithOptionalTimeout(
+          session,
           language,
-          imageType: "sevenInchScreenshots",
-          media: {
-            mimeType: "image/png",
-            body: imageBuffer,
-          },
-        });
+          "sevenInchScreenshots",
+          imageBuffer,
+          imageUploadTimeoutMs
+        );
         console.error(`[GooglePlayClient]   ✅ Uploaded ${fileName}`);
         result.uploaded.sevenInchScreenshots++;
       }
@@ -1056,17 +1049,13 @@ export class GooglePlayClient {
         }
         const imageBuffer = readFileSync(imagePath);
         const fileName = imagePath.split("/").pop() || `tablet10-${i + 1}.png`;
-        await this.androidPublisher.edits.images.upload({
-          auth: session.auth,
-          packageName: session.packageName,
-          editId: session.editId,
+        await this.uploadImageWithOptionalTimeout(
+          session,
           language,
-          imageType: "tenInchScreenshots",
-          media: {
-            mimeType: "image/png",
-            body: imageBuffer,
-          },
-        });
+          "tenInchScreenshots",
+          imageBuffer,
+          imageUploadTimeoutMs
+        );
         console.error(`[GooglePlayClient]   ✅ Uploaded ${fileName}`);
         result.uploaded.tenInchScreenshots++;
       }
@@ -1074,17 +1063,13 @@ export class GooglePlayClient {
       // Upload feature graphic
       if (featureGraphic && existsSync(featureGraphic)) {
         const imageBuffer = readFileSync(featureGraphic);
-        await this.androidPublisher.edits.images.upload({
-          auth: session.auth,
-          packageName: session.packageName,
-          editId: session.editId,
+        await this.uploadImageWithOptionalTimeout(
+          session,
           language,
-          imageType: "featureGraphic",
-          media: {
-            mimeType: "image/png",
-            body: imageBuffer,
-          },
-        });
+          "featureGraphic",
+          imageBuffer,
+          imageUploadTimeoutMs
+        );
         console.error(`[GooglePlayClient]   ✅ Uploaded feature-graphic.png`);
         result.uploaded.featureGraphic = true;
       }
@@ -1110,6 +1095,29 @@ export class GooglePlayClient {
       }
       throw error;
     }
+  }
+
+  private async uploadImageWithOptionalTimeout(
+    session: EditSession,
+    language: string,
+    imageType: ImageType,
+    imageBuffer: Buffer,
+    timeoutMs?: number
+  ): Promise<void> {
+    await this.androidPublisher.edits.images.upload(
+      {
+        auth: session.auth,
+        packageName: session.packageName,
+        editId: session.editId,
+        language,
+        imageType,
+        media: {
+          mimeType: "image/png",
+          body: imageBuffer,
+        },
+      },
+      timeoutMs ? { timeout: timeoutMs } : undefined
+    );
   }
 
   private async getTrack(
