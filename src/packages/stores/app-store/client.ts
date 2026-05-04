@@ -1152,6 +1152,13 @@ export class AppStoreClient {
 
     let deletedCount = 0;
     for (const screenshot of screenshots) {
+      if (screenshot.type !== "appScreenshots") {
+        console.error(
+          `[AppStore]       Skipping non-screenshot asset ${screenshot.id}`
+        );
+        continue;
+      }
+
       await this.deleteScreenshot(screenshot.id);
       deletedCount++;
     }
