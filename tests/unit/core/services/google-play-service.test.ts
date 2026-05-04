@@ -1,6 +1,9 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { resolveGooglePlayLocales } from "@/core/services/google-play-service";
+import {
+  resolveGooglePlayLocales,
+  shouldPushGooglePlayAppDetails,
+} from "@/core/services/google-play-service";
 
 describe("google-play-service", () => {
   describe("resolveGooglePlayLocales", () => {
@@ -35,6 +38,33 @@ describe("google-play-service", () => {
         localesToPush: ["ko-KR"],
         missingLocales: ["fr-FR"],
       });
+    });
+  });
+
+  describe("shouldPushGooglePlayAppDetails", () => {
+    it("should push app details for full pushes with contact details", () => {
+      const result = shouldPushGooglePlayAppDetails({
+        hasContactDetails: true,
+      });
+
+      assert.equal(result, true);
+    });
+
+    it("should skip app details for partial locale pushes", () => {
+      const result = shouldPushGooglePlayAppDetails({
+        hasContactDetails: true,
+        requestedLocales: ["ko-KR"],
+      });
+
+      assert.equal(result, false);
+    });
+
+    it("should skip app details when there are no contact details", () => {
+      const result = shouldPushGooglePlayAppDetails({
+        hasContactDetails: false,
+      });
+
+      assert.equal(result, false);
     });
   });
 });

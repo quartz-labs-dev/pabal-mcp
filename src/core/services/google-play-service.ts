@@ -36,6 +36,8 @@ interface GooglePlayAppInfo {
   supportedLocales?: string[];
 }
 
+const GOOGLE_PLAY_SCREENSHOT_LOCALE_BATCH_SIZE = 5;
+
 export function resolveGooglePlayLocales(
   allLocales: string[],
   requestedLocales?: string[]
@@ -51,6 +53,16 @@ export function resolveGooglePlayLocales(
       (locale) => !allLocales.includes(locale)
     ),
   };
+}
+
+export function shouldPushGooglePlayAppDetails({
+  hasContactDetails,
+  requestedLocales,
+}: {
+  hasContactDetails: boolean;
+  requestedLocales?: string[];
+}): boolean {
+  return hasContactDetails && !requestedLocales?.length;
 }
 
 /**
@@ -343,14 +355,27 @@ export class GooglePlayService {
         ),
       });
 
-      // Push app-level contact information
-      if (googlePlayData.contactEmail || googlePlayData.contactWebsite) {
+      // Push app-level contact information once for full pushes. Partial locale
+      // pushes are commonly batched, and repeating details edits can invalidate
+      // otherwise-successful listing commits on Google Play.
+      if (
+        shouldPushGooglePlayAppDetails({
+          hasContactDetails: Boolean(
+            googlePlayData.contactEmail || googlePlayData.contactWebsite
+          ),
+          requestedLocales: locales,
+        })
+      ) {
         console.error(`[GooglePlay]   📤 Pushing app details...`);
         await client.pushAppDetails({
           contactEmail: googlePlayData.contactEmail,
           contactWebsite: googlePlayData.contactWebsite,
         });
         console.error(`[GooglePlay]   ✅ App details uploaded successfully`);
+      } else if (locales?.length) {
+        console.error(
+          `[GooglePlay]   ⏭️  Skipping app details for partial locale push`
+        );
       }
 
       // Upload screenshots if enabled
@@ -362,6 +387,9 @@ export class GooglePlayService {
         const uploadedLocales: string[] = [];
         const skippedLocales: string[] = [];
         const failedLocales: string[] = [];
+        const screenshotUploadOptions: Parameters<
+          GooglePlayClient["uploadScreenshotsForLocales"]
+        >[0] = [];
 
         for (const locale of localesToPush) {
           try {
@@ -452,13 +480,13 @@ export class GooglePlayService {
             }
 
             console.error(
-              `[GooglePlay]   📤 Uploading screenshots for ${locale} (batch mode - will replace existing)...`
+              `[GooglePlay]   📋 Queued screenshots for ${locale} (batch mode - will replace existing)...`
             );
 
             // Google Play upload strategy:
             // - phone → uploads to phoneScreenshots AND sevenInchScreenshots (both use same images)
             // - tablet → uploads to tenInchScreenshots only
-            const uploadResult = await client.uploadScreenshotsForLocale({
+            screenshotUploadOptions.push({
               language: locale,
               phoneScreenshots: screenshots.phone,
               sevenInchScreenshots: screenshots.phone,
@@ -466,11 +494,6 @@ export class GooglePlayService {
               featureGraphic: screenshots.featureGraphic || undefined,
               imageUploadTimeoutMs,
             });
-
-            console.error(
-              `[GooglePlay]   ✅ Images uploaded for ${locale}: ${uploadResult.uploaded.phoneScreenshots} phone, ${uploadResult.uploaded.sevenInchScreenshots} 7-inch, ${uploadResult.uploaded.tenInchScreenshots} 10-inch, feature graphic ${uploadResult.uploaded.featureGraphic ? "yes" : "no"}`
-            );
-            uploadedLocales.push(locale);
           } catch (error) {
             console.error(
               `[GooglePlay]   ❌ Failed to upload screenshots for ${locale}: ${
@@ -478,6 +501,40 @@ export class GooglePlayService {
               }`
             );
             failedLocales.push(locale);
+          }
+        }
+
+        for (
+          let offset = 0;
+          offset < screenshotUploadOptions.length;
+          offset += GOOGLE_PLAY_SCREENSHOT_LOCALE_BATCH_SIZE
+        ) {
+          const batch = screenshotUploadOptions.slice(
+            offset,
+            offset + GOOGLE_PLAY_SCREENSHOT_LOCALE_BATCH_SIZE
+          );
+
+          try {
+            console.error(
+              `[GooglePlay]   📤 Uploading screenshots for ${batch.length} locale(s) in one edit...`
+            );
+            const uploadResults =
+              await client.uploadScreenshotsForLocales(batch);
+
+            for (const uploadResult of uploadResults) {
+              console.error(
+                `[GooglePlay]   ✅ Images uploaded for ${uploadResult.language}: ${uploadResult.uploaded.phoneScreenshots} phone, ${uploadResult.uploaded.sevenInchScreenshots} 7-inch, ${uploadResult.uploaded.tenInchScreenshots} 10-inch, feature graphic ${uploadResult.uploaded.featureGraphic ? "yes" : "no"}`
+              );
+              uploadedLocales.push(uploadResult.language);
+            }
+          } catch (error) {
+            const failedBatchLocales = batch.map((option) => option.language);
+            console.error(
+              `[GooglePlay]   ❌ Batch screenshot upload failed for ${failedBatchLocales.join(", ")}: ${
+                error instanceof Error ? error.message : String(error)
+              }`
+            );
+            failedLocales.push(...failedBatchLocales);
           }
         }
 
@@ -495,8 +552,12 @@ export class GooglePlayService {
           );
         }
         if (failedLocales.length > 0) {
+          const uniqueFailedLocales = [...new Set(failedLocales)];
           console.error(
-            `[GooglePlay]     ❌ Failed: ${failedLocales.join(", ")}`
+            `[GooglePlay]     ❌ Failed: ${uniqueFailedLocales.join(", ")}`
+          );
+          throw new Error(
+            `Screenshot upload failed for locales: ${uniqueFailedLocales.join(", ")}`
           );
         }
       }

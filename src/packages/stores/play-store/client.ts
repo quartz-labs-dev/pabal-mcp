@@ -902,14 +902,46 @@ export class GooglePlayClient {
   async uploadScreenshotsForLocale(
     options: BatchUploadScreenshotsOptions
   ): Promise<BatchUploadScreenshotsResult> {
-    const {
-      language,
-      phoneScreenshots = [],
-      sevenInchScreenshots = [],
-      tenInchScreenshots = [],
-      featureGraphic,
-      imageUploadTimeoutMs,
-    } = options;
+    const authClient = await this.auth.getClient();
+    const editResponse = await this.createEdit(authClient, this.packageName);
+    const editId = editResponse.data.id!;
+
+    const session: EditSession = {
+      auth: authClient,
+      packageName: this.packageName,
+      editId,
+    };
+
+    try {
+      const result = await this.uploadScreenshotsInSession(session, options);
+
+      // Commit all changes
+      console.error(
+        `[GooglePlayClient] Committing screenshots for ${options.language}...`
+      );
+      await this.commitEdit(session);
+      console.error(
+        `[GooglePlayClient] ✅ Screenshots committed for ${options.language}`
+      );
+
+      return result;
+    } catch (error) {
+      console.error(
+        `[GooglePlayClient] Rolling back screenshot upload for ${options.language}...`
+      );
+      try {
+        await this.deleteEdit(session);
+      } catch {
+        // Ignore deletion failure
+      }
+      throw error;
+    }
+  }
+
+  async uploadScreenshotsForLocales(
+    optionsList: BatchUploadScreenshotsOptions[]
+  ): Promise<BatchUploadScreenshotsResult[]> {
+    if (optionsList.length === 0) return [];
 
     const authClient = await this.auth.getClient();
     const editResponse = await this.createEdit(authClient, this.packageName);
@@ -921,6 +953,52 @@ export class GooglePlayClient {
       editId,
     };
 
+    try {
+      const results: BatchUploadScreenshotsResult[] = [];
+
+      for (const options of optionsList) {
+        console.error(
+          `[GooglePlayClient] Preparing screenshots for ${options.language}...`
+        );
+        const result = await this.uploadScreenshotsInSession(session, options);
+        results.push(result);
+      }
+
+      console.error(
+        `[GooglePlayClient] Committing screenshots for ${optionsList.length} locale(s)...`
+      );
+      await this.commitEdit(session);
+      console.error(
+        `[GooglePlayClient] ✅ Screenshots committed for ${optionsList.length} locale(s)`
+      );
+
+      return results;
+    } catch (error) {
+      console.error(
+        `[GooglePlayClient] Rolling back batch screenshot upload...`
+      );
+      try {
+        await this.deleteEdit(session);
+      } catch {
+        // Ignore deletion failure
+      }
+      throw error;
+    }
+  }
+
+  private async uploadScreenshotsInSession(
+    session: EditSession,
+    options: BatchUploadScreenshotsOptions
+  ): Promise<BatchUploadScreenshotsResult> {
+    const {
+      language,
+      phoneScreenshots = [],
+      sevenInchScreenshots = [],
+      tenInchScreenshots = [],
+      featureGraphic,
+      imageUploadTimeoutMs,
+    } = options;
+
     const result: BatchUploadScreenshotsResult = {
       language,
       uploaded: {
@@ -931,170 +1009,144 @@ export class GooglePlayClient {
       },
     };
 
-    try {
-      // Delete existing screenshots before uploading
-      if (phoneScreenshots.length > 0) {
-        console.error(
-          `[GooglePlayClient] Deleting existing phone screenshots for ${language}...`
-        );
-        try {
-          await this.deleteAllImages(session, language, "phoneScreenshots");
-        } catch (e: any) {
-          // Ignore if no images exist
-          if (e.code !== 404) {
-            console.error(
-              `[GooglePlayClient] Warning: Failed to delete phone screenshots: ${e.message}`
-            );
-          }
-        }
-      }
-
-      if (sevenInchScreenshots.length > 0) {
-        console.error(
-          `[GooglePlayClient] Deleting existing 7-inch screenshots for ${language}...`
-        );
-        try {
-          await this.deleteAllImages(session, language, "sevenInchScreenshots");
-        } catch (e: any) {
-          if (e.code !== 404) {
-            console.error(
-              `[GooglePlayClient] Warning: Failed to delete 7-inch screenshots: ${e.message}`
-            );
-          }
-        }
-      }
-
-      if (tenInchScreenshots.length > 0) {
-        console.error(
-          `[GooglePlayClient] Deleting existing 10-inch screenshots for ${language}...`
-        );
-        try {
-          await this.deleteAllImages(session, language, "tenInchScreenshots");
-        } catch (e: any) {
-          if (e.code !== 404) {
-            console.error(
-              `[GooglePlayClient] Warning: Failed to delete 10-inch screenshots: ${e.message}`
-            );
-          }
-        }
-      }
-
-      if (featureGraphic) {
-        console.error(
-          `[GooglePlayClient] Deleting existing feature graphic for ${language}...`
-        );
-        try {
-          await this.deleteAllImages(session, language, "featureGraphic");
-        } catch (e: any) {
-          if (e.code !== 404) {
-            console.error(
-              `[GooglePlayClient] Warning: Failed to delete feature graphic: ${e.message}`
-            );
-          }
-        }
-      }
-
-      // Upload phone screenshots
-      for (let i = 0; i < phoneScreenshots.length; i++) {
-        const imagePath = phoneScreenshots[i];
-        if (!existsSync(imagePath)) {
-          console.error(
-            `[GooglePlayClient] Warning: Phone screenshot not found: ${imagePath}`
-          );
-          continue;
-        }
-        const imageBuffer = readFileSync(imagePath);
-        const fileName = imagePath.split("/").pop() || `phone-${i + 1}.png`;
-        await this.uploadImageWithOptionalTimeout(
-          session,
-          language,
-          "phoneScreenshots",
-          imageBuffer,
-          imageUploadTimeoutMs
-        );
-        console.error(`[GooglePlayClient]   ✅ Uploaded ${fileName}`);
-        result.uploaded.phoneScreenshots++;
-      }
-
-      // Upload 7-inch tablet screenshots
-      for (let i = 0; i < sevenInchScreenshots.length; i++) {
-        const imagePath = sevenInchScreenshots[i];
-        if (!existsSync(imagePath)) {
-          console.error(
-            `[GooglePlayClient] Warning: 7-inch screenshot not found: ${imagePath}`
-          );
-          continue;
-        }
-        const imageBuffer = readFileSync(imagePath);
-        const fileName = imagePath.split("/").pop() || `tablet7-${i + 1}.png`;
-        await this.uploadImageWithOptionalTimeout(
-          session,
-          language,
-          "sevenInchScreenshots",
-          imageBuffer,
-          imageUploadTimeoutMs
-        );
-        console.error(`[GooglePlayClient]   ✅ Uploaded ${fileName}`);
-        result.uploaded.sevenInchScreenshots++;
-      }
-
-      // Upload 10-inch tablet screenshots
-      for (let i = 0; i < tenInchScreenshots.length; i++) {
-        const imagePath = tenInchScreenshots[i];
-        if (!existsSync(imagePath)) {
-          console.error(
-            `[GooglePlayClient] Warning: 10-inch screenshot not found: ${imagePath}`
-          );
-          continue;
-        }
-        const imageBuffer = readFileSync(imagePath);
-        const fileName = imagePath.split("/").pop() || `tablet10-${i + 1}.png`;
-        await this.uploadImageWithOptionalTimeout(
-          session,
-          language,
-          "tenInchScreenshots",
-          imageBuffer,
-          imageUploadTimeoutMs
-        );
-        console.error(`[GooglePlayClient]   ✅ Uploaded ${fileName}`);
-        result.uploaded.tenInchScreenshots++;
-      }
-
-      // Upload feature graphic
-      if (featureGraphic && existsSync(featureGraphic)) {
-        const imageBuffer = readFileSync(featureGraphic);
-        await this.uploadImageWithOptionalTimeout(
-          session,
-          language,
-          "featureGraphic",
-          imageBuffer,
-          imageUploadTimeoutMs
-        );
-        console.error(`[GooglePlayClient]   ✅ Uploaded feature-graphic.png`);
-        result.uploaded.featureGraphic = true;
-      }
-
-      // Commit all changes
+    if (phoneScreenshots.length > 0) {
       console.error(
-        `[GooglePlayClient] Committing screenshots for ${language}...`
-      );
-      await this.commitEdit(session);
-      console.error(
-        `[GooglePlayClient] ✅ Screenshots committed for ${language}`
-      );
-
-      return result;
-    } catch (error) {
-      console.error(
-        `[GooglePlayClient] Rolling back screenshot upload for ${language}...`
+        `[GooglePlayClient] Deleting existing phone screenshots for ${language}...`
       );
       try {
-        await this.deleteEdit(session);
-      } catch {
-        // Ignore deletion failure
+        await this.deleteAllImages(session, language, "phoneScreenshots");
+      } catch (e: any) {
+        // Ignore if no images exist
+        if (e.code !== 404) {
+          console.error(
+            `[GooglePlayClient] Warning: Failed to delete phone screenshots: ${e.message}`
+          );
+        }
       }
-      throw error;
     }
+
+    if (sevenInchScreenshots.length > 0) {
+      console.error(
+        `[GooglePlayClient] Deleting existing 7-inch screenshots for ${language}...`
+      );
+      try {
+        await this.deleteAllImages(session, language, "sevenInchScreenshots");
+      } catch (e: any) {
+        if (e.code !== 404) {
+          console.error(
+            `[GooglePlayClient] Warning: Failed to delete 7-inch screenshots: ${e.message}`
+          );
+        }
+      }
+    }
+
+    if (tenInchScreenshots.length > 0) {
+      console.error(
+        `[GooglePlayClient] Deleting existing 10-inch screenshots for ${language}...`
+      );
+      try {
+        await this.deleteAllImages(session, language, "tenInchScreenshots");
+      } catch (e: any) {
+        if (e.code !== 404) {
+          console.error(
+            `[GooglePlayClient] Warning: Failed to delete 10-inch screenshots: ${e.message}`
+          );
+        }
+      }
+    }
+
+    if (featureGraphic) {
+      console.error(
+        `[GooglePlayClient] Deleting existing feature graphic for ${language}...`
+      );
+      try {
+        await this.deleteAllImages(session, language, "featureGraphic");
+      } catch (e: any) {
+        if (e.code !== 404) {
+          console.error(
+            `[GooglePlayClient] Warning: Failed to delete feature graphic: ${e.message}`
+          );
+        }
+      }
+    }
+
+    for (let i = 0; i < phoneScreenshots.length; i++) {
+      const imagePath = phoneScreenshots[i];
+      if (!existsSync(imagePath)) {
+        console.error(
+          `[GooglePlayClient] Warning: Phone screenshot not found: ${imagePath}`
+        );
+        continue;
+      }
+      const imageBuffer = readFileSync(imagePath);
+      const fileName = imagePath.split("/").pop() || `phone-${i + 1}.png`;
+      await this.uploadImageWithOptionalTimeout(
+        session,
+        language,
+        "phoneScreenshots",
+        imageBuffer,
+        imageUploadTimeoutMs
+      );
+      console.error(`[GooglePlayClient]   ✅ Uploaded ${fileName}`);
+      result.uploaded.phoneScreenshots++;
+    }
+
+    for (let i = 0; i < sevenInchScreenshots.length; i++) {
+      const imagePath = sevenInchScreenshots[i];
+      if (!existsSync(imagePath)) {
+        console.error(
+          `[GooglePlayClient] Warning: 7-inch screenshot not found: ${imagePath}`
+        );
+        continue;
+      }
+      const imageBuffer = readFileSync(imagePath);
+      const fileName = imagePath.split("/").pop() || `tablet7-${i + 1}.png`;
+      await this.uploadImageWithOptionalTimeout(
+        session,
+        language,
+        "sevenInchScreenshots",
+        imageBuffer,
+        imageUploadTimeoutMs
+      );
+      console.error(`[GooglePlayClient]   ✅ Uploaded ${fileName}`);
+      result.uploaded.sevenInchScreenshots++;
+    }
+
+    for (let i = 0; i < tenInchScreenshots.length; i++) {
+      const imagePath = tenInchScreenshots[i];
+      if (!existsSync(imagePath)) {
+        console.error(
+          `[GooglePlayClient] Warning: 10-inch screenshot not found: ${imagePath}`
+        );
+        continue;
+      }
+      const imageBuffer = readFileSync(imagePath);
+      const fileName = imagePath.split("/").pop() || `tablet10-${i + 1}.png`;
+      await this.uploadImageWithOptionalTimeout(
+        session,
+        language,
+        "tenInchScreenshots",
+        imageBuffer,
+        imageUploadTimeoutMs
+      );
+      console.error(`[GooglePlayClient]   ✅ Uploaded ${fileName}`);
+      result.uploaded.tenInchScreenshots++;
+    }
+
+    if (featureGraphic && existsSync(featureGraphic)) {
+      const imageBuffer = readFileSync(featureGraphic);
+      await this.uploadImageWithOptionalTimeout(
+        session,
+        language,
+        "featureGraphic",
+        imageBuffer,
+        imageUploadTimeoutMs
+      );
+      console.error(`[GooglePlayClient]   ✅ Uploaded feature-graphic.png`);
+      result.uploaded.featureGraphic = true;
+    }
+
+    return result;
   }
 
   private async uploadImageWithOptionalTimeout(
