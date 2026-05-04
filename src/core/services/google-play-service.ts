@@ -319,13 +319,16 @@ export class GooglePlayService {
           try {
             const localeData = googlePlayData.locales[locale];
 
-            // Check if screenshots are defined in aso-data.json
-            const hasScreenshotsInJson =
-              localeData?.screenshots &&
-              ((localeData.screenshots.phone &&
-                localeData.screenshots.phone.length > 0) ||
-                (localeData.screenshots.tablet &&
-                  localeData.screenshots.tablet.length > 0));
+            // Check if images are defined in aso-data.json
+            const hasImagesInJson =
+              Boolean(localeData?.featureGraphic) ||
+              Boolean(
+                localeData?.screenshots &&
+                ((localeData.screenshots.phone &&
+                  localeData.screenshots.phone.length > 0) ||
+                  (localeData.screenshots.tablet &&
+                    localeData.screenshots.tablet.length > 0))
+              );
 
             let screenshots: {
               phone: string[];
@@ -333,7 +336,7 @@ export class GooglePlayService {
               featureGraphic: string | null;
             };
 
-            if (hasScreenshotsInJson) {
+            if (hasImagesInJson) {
               // Use screenshots from aso-data.json (relative paths)
               console.error(
                 `[GooglePlay]   📋 Using screenshots from aso-data.json for ${locale}`
@@ -379,11 +382,22 @@ export class GooglePlayService {
               };
             }
 
-            // Google Play requires minimum 2 phone screenshots
+            // Google Play requires minimum 2 phone screenshots for that image type.
             const phoneCount = screenshots.phone.length;
-            if (phoneCount < 2) {
+            if (phoneCount > 0 && phoneCount < 2) {
               console.error(
-                `[GooglePlay]   ⚠️  Skipping ${locale} - needs at least 2 phone screenshots (found ${phoneCount})`
+                `[GooglePlay]   ⚠️  Skipping phone screenshots for ${locale} - needs at least 2 (found ${phoneCount})`
+              );
+              screenshots.phone = [];
+            }
+
+            const hasImagesToUpload =
+              screenshots.phone.length > 0 ||
+              screenshots.tablet.length > 0 ||
+              Boolean(screenshots.featureGraphic);
+            if (!hasImagesToUpload) {
+              console.error(
+                `[GooglePlay]   ⏭️  Skipping ${locale} - no uploadable images found`
               );
               skippedLocales.push(locale);
               continue;
@@ -405,7 +419,7 @@ export class GooglePlayService {
             });
 
             console.error(
-              `[GooglePlay]   ✅ Screenshots uploaded for ${locale}: ${uploadResult.uploaded.phoneScreenshots} phone, ${uploadResult.uploaded.sevenInchScreenshots} 7-inch, ${uploadResult.uploaded.tenInchScreenshots} 10-inch`
+              `[GooglePlay]   ✅ Images uploaded for ${locale}: ${uploadResult.uploaded.phoneScreenshots} phone, ${uploadResult.uploaded.sevenInchScreenshots} 7-inch, ${uploadResult.uploaded.tenInchScreenshots} 10-inch, feature graphic ${uploadResult.uploaded.featureGraphic ? "yes" : "no"}`
             );
             uploadedLocales.push(locale);
           } catch (error) {
