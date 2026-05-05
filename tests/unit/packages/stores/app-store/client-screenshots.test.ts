@@ -12,6 +12,13 @@ interface ScreenshotDeletionTestClient {
   ): Promise<ApiResponse<AppStoreScreenshot[]>>;
   deleteScreenshot(screenshotId: string): Promise<void>;
   deleteAllScreenshotsInSet(screenshotSetId: string): Promise<number>;
+  prepareScreenshotSetForUpload(
+    screenshotSetId: string,
+    incomingCount: number
+  ): Promise<{
+    deletedBeforeUpload: number;
+    screenshotsToDeleteAfterUpload: AppStoreScreenshot[];
+  }>;
 }
 
 const createClient = (): ScreenshotDeletionTestClient =>
@@ -44,5 +51,54 @@ describe("AppStoreClient screenshot deletion", () => {
 
     assert.equal(deletedCount, 2);
     assert.deepEqual(deletedIds, ["screenshot-1", "screenshot-2"]);
+  });
+
+  it("deletes only the minimum screenshots needed before uploading a replacement batch", async () => {
+    const client = createClient();
+    const deletedIds: string[] = [];
+
+    client.listScreenshots = async () =>
+      ({
+        data: [
+          { id: "screenshot-1", type: "appScreenshots" },
+          { id: "screenshot-2", type: "appScreenshots" },
+          { id: "screenshot-3", type: "appScreenshots" },
+          { id: "screenshot-4", type: "appScreenshots" },
+          { id: "screenshot-5", type: "appScreenshots" },
+          { id: "screenshot-6", type: "appScreenshots" },
+          { id: "preview-1", type: "appPreviews" },
+        ],
+      }) as unknown as ApiResponse<AppStoreScreenshot[]>;
+    client.deleteScreenshot = async (screenshotId: string) => {
+      deletedIds.push(screenshotId);
+    };
+
+    const result = await client.prepareScreenshotSetForUpload("set-1", 6);
+
+    assert.equal(result.deletedBeforeUpload, 2);
+    assert.deepEqual(deletedIds, ["screenshot-5", "screenshot-6"]);
+    assert.deepEqual(
+      result.screenshotsToDeleteAfterUpload.map((screenshot) => screenshot.id),
+      ["screenshot-1", "screenshot-2", "screenshot-3", "screenshot-4"]
+    );
+  });
+
+  it("rejects a screenshot batch larger than the App Store display-type limit before deleting anything", async () => {
+    const client = createClient();
+    const deletedIds: string[] = [];
+
+    client.listScreenshots = async () =>
+      ({
+        data: [{ id: "screenshot-1", type: "appScreenshots" }],
+      }) as unknown as ApiResponse<AppStoreScreenshot[]>;
+    client.deleteScreenshot = async (screenshotId: string) => {
+      deletedIds.push(screenshotId);
+    };
+
+    await assert.rejects(
+      () => client.prepareScreenshotSetForUpload("set-1", 11),
+      /allows up to 10 screenshots/
+    );
+    assert.deepEqual(deletedIds, []);
   });
 });

@@ -291,7 +291,9 @@ registerToolWithInfo(
         .int()
         .positive()
         .optional()
-        .describe("Per-image upload timeout in milliseconds"),
+        .describe(
+          "Per-image upload timeout in milliseconds (default: 600000 when uploadImages=true)"
+        ),
       dryRun: z
         .boolean()
         .optional()

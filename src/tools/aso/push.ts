@@ -14,6 +14,8 @@ import { AppStoreService } from "@/core/services/app-store-service";
 import { GooglePlayService } from "@/core/services/google-play-service";
 import { formatPushResult } from "@/core/helpers/formatters";
 
+const DEFAULT_IMAGE_UPLOAD_TIMEOUT_MS = 10 * 60 * 1000;
+
 const appResolutionService = new AppResolutionService();
 const appStoreService = new AppStoreService();
 const googlePlayService = new GooglePlayService();
@@ -34,9 +36,11 @@ export async function handleAsoPush(options: AsoPushOptions) {
     store = "both",
     uploadImages = false,
     locales,
-    imageUploadTimeoutMs,
     dryRun = false,
   } = options;
+  const imageUploadTimeoutMs =
+    options.imageUploadTimeoutMs ??
+    (uploadImages ? DEFAULT_IMAGE_UPLOAD_TIMEOUT_MS : undefined);
 
   const resolved = appResolutionService.resolve({
     slug: options.app,

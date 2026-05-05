@@ -71,6 +71,10 @@ import type {
 
 type ApiClass<T extends BaseAPI> = new (configuration?: Configuration) => T;
 
+const APP_STORE_SCREENSHOT_SET_MAX_COUNT = 10;
+const DEFAULT_IMAGE_UPLOAD_TIMEOUT_MS = 10 * 60 * 1000;
+const SCREENSHOT_UPLOAD_LOCK_STALE_MS = 30 * 60 * 1000;
+
 export class AppStoreClient {
   private issuerId: string;
   private keyId: string;
@@ -1092,9 +1096,12 @@ export class AppStoreClient {
       });
 
       req.on("error", reject);
-      if (timeoutMs) {
-        req.setTimeout(timeoutMs, () => {
-          req.destroy(new Error(`Upload timed out after ${timeoutMs}ms`));
+      const effectiveTimeoutMs = timeoutMs ?? DEFAULT_IMAGE_UPLOAD_TIMEOUT_MS;
+      if (effectiveTimeoutMs > 0) {
+        req.setTimeout(effectiveTimeoutMs, () => {
+          req.destroy(
+            new Error(`Upload timed out after ${effectiveTimeoutMs}ms`)
+          );
         });
       }
       req.write(fileBuffer);
@@ -1150,6 +1157,12 @@ export class AppStoreClient {
     const screenshotsResponse = await this.listScreenshots(screenshotSetId);
     const screenshots = screenshotsResponse.data || [];
 
+    return this.deleteScreenshots(screenshots);
+  }
+
+  private async deleteScreenshots(
+    screenshots: AppStoreScreenshot[]
+  ): Promise<number> {
     let deletedCount = 0;
     for (const screenshot of screenshots) {
       if (screenshot.type !== "appScreenshots") {
@@ -1164,6 +1177,64 @@ export class AppStoreClient {
     }
 
     return deletedCount;
+  }
+
+  private async prepareScreenshotSetForUpload(
+    screenshotSetId: string,
+    incomingCount: number
+  ): Promise<{
+    deletedBeforeUpload: number;
+    screenshotsToDeleteAfterUpload: AppStoreScreenshot[];
+  }> {
+    if (incomingCount > APP_STORE_SCREENSHOT_SET_MAX_COUNT) {
+      throw new Error(
+        `Preflight failed: App Store allows up to ${APP_STORE_SCREENSHOT_SET_MAX_COUNT} screenshots per display type, got ${incomingCount}`
+      );
+    }
+
+    const screenshotsResponse = await this.listScreenshots(screenshotSetId);
+    const existingScreenshots = (screenshotsResponse.data || []).filter(
+      (screenshot) => screenshot.type === "appScreenshots"
+    );
+    const nonScreenshotCount =
+      (screenshotsResponse.data || []).length - existingScreenshots.length;
+
+    if (nonScreenshotCount > 0) {
+      console.error(
+        `[AppStore]       Ignoring ${nonScreenshotCount} non-screenshot asset(s) in screenshot set`
+      );
+    }
+
+    const slotsToFree = Math.max(
+      0,
+      existingScreenshots.length +
+        incomingCount -
+        APP_STORE_SCREENSHOT_SET_MAX_COUNT
+    );
+    // Preserve the first screenshots as long as possible. If the upload fails
+    // after freeing slots, users are more likely to still see the primary
+    // screenshots rather than the tail of the old set.
+    const screenshotsToDeleteBeforeUpload =
+      slotsToFree > 0 ? existingScreenshots.slice(-slotsToFree) : [];
+    const screenshotsToDeleteAfterUpload = existingScreenshots.slice(
+      0,
+      existingScreenshots.length - slotsToFree
+    );
+
+    const deletedBeforeUpload = await this.deleteScreenshots(
+      screenshotsToDeleteBeforeUpload
+    );
+
+    if (deletedBeforeUpload > 0) {
+      console.error(
+        `[AppStore]       Deleted ${deletedBeforeUpload} existing screenshots to free upload slots`
+      );
+    }
+
+    return {
+      deletedBeforeUpload,
+      screenshotsToDeleteAfterUpload,
+    };
   }
 
   private sanitizePathSegment(value: string): string {
@@ -1194,11 +1265,21 @@ export class AppStoreClient {
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
       if (code === "EEXIST") {
-        throw new Error(
-          `Screenshot upload lock is already held (${lockPath}). Another upload is running for this locale/display type.`
-        );
+        const lockAgeMs = Date.now() - statSync(lockPath).mtimeMs;
+        if (lockAgeMs > SCREENSHOT_UPLOAD_LOCK_STALE_MS) {
+          console.error(
+            `[AppStore] Removing stale screenshot upload lock (${lockPath})`
+          );
+          unlinkSync(lockPath);
+          descriptor = openSync(lockPath, "wx");
+        } else {
+          throw new Error(
+            `Screenshot upload lock is already held (${lockPath}). Another upload is running for this locale/display type.`
+          );
+        }
+      } else {
+        throw error;
       }
-      throw error;
     }
 
     closeSync(descriptor);
@@ -1271,10 +1352,27 @@ export class AppStoreClient {
   }
 
   /**
-   * Upload multiple screenshots for a locale, replacing existing ones
+   * Upload multiple screenshots for a locale, replacing existing ones.
+   *
+   * Failure model:
+   *
+   * existing screenshots ──┐
+   *                        ├─ free only the slots App Store requires
+   * incoming screenshots ──┘
+   *          │
+   *          ├─ upload + commit every incoming screenshot
+   *          │
+   *          └─ only after success, delete the remaining old screenshots
+   *
+   * This avoids the old delete-first behavior where a timeout could leave the
+   * user with an empty screenshot set. If upload fails, most existing
+   * screenshots remain visible and any successfully uploaded new screenshots
+   * are left in App Store Connect for manual or retry cleanup.
+   *
    * 1. Find or create screenshot sets for each display type
-   * 2. Delete existing screenshots in each set
+   * 2. Delete only enough existing screenshots to fit the incoming batch
    * 3. Upload new screenshots in order
+   * 4. Delete remaining old screenshots after the batch succeeds
    */
   async uploadScreenshotsForLocale(options: {
     locale: string;
@@ -1359,17 +1457,15 @@ export class AppStoreClient {
             displayType
           );
 
-          // Delete existing screenshots in this set
-          const deletedCount =
-            await this.deleteAllScreenshotsInSet(screenshotSetId);
-          if (deletedCount > 0) {
-            console.error(
-              `[AppStore]       Deleted ${deletedCount} existing screenshots`
+          const { deletedBeforeUpload, screenshotsToDeleteAfterUpload } =
+            await this.prepareScreenshotSetForUpload(
+              screenshotSetId,
+              screenshotList.length
             );
-            result.deleted += deletedCount;
-          }
+          result.deleted += deletedBeforeUpload;
 
           // Upload new screenshots in order
+          let uploadedForDisplayType = 0;
           for (const screenshot of screenshotList) {
             try {
               const fileBuffer = readFileSync(screenshot.path);
@@ -1400,6 +1496,7 @@ export class AppStoreClient {
               await this.commitAppScreenshot(screenshotData.id);
               console.error(`[AppStore]       ✅ ${screenshot.filename}`);
               result.uploaded++;
+              uploadedForDisplayType++;
             } catch (error) {
               result.failed++;
               throw new Error(
@@ -1407,6 +1504,18 @@ export class AppStoreClient {
                   error instanceof Error ? error.message : String(error)
                 }`
               );
+            }
+          }
+
+          if (uploadedForDisplayType === screenshotList.length) {
+            const deletedAfterUpload = await this.deleteScreenshots(
+              screenshotsToDeleteAfterUpload
+            );
+            if (deletedAfterUpload > 0) {
+              console.error(
+                `[AppStore]       Deleted ${deletedAfterUpload} replaced screenshots after successful upload`
+              );
+              result.deleted += deletedAfterUpload;
             }
           }
         } finally {
