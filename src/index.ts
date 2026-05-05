@@ -294,6 +294,14 @@ registerToolWithInfo(
         .describe(
           "Per-image upload timeout in milliseconds (default: 600000 when uploadImages=true)"
         ),
+      imageLocaleBatchSize: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe(
+          "Google Play image locale batch size. Omit to upload all target locales in one edit commit"
+        ),
       dryRun: z
         .boolean()
         .optional()

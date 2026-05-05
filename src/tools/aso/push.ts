@@ -28,6 +28,7 @@ interface AsoPushOptions {
   uploadImages?: boolean;
   locales?: string[];
   imageUploadTimeoutMs?: number;
+  imageLocaleBatchSize?: number;
   dryRun?: boolean;
 }
 
@@ -71,6 +72,11 @@ export async function handleAsoPush(options: AsoPushOptions) {
   if (locales?.length) console.error(`[MCP]   Locales: ${locales.join(", ")}`);
   if (imageUploadTimeoutMs) {
     console.error(`[MCP]   Image Upload Timeout: ${imageUploadTimeoutMs}ms`);
+  }
+  if (options.imageLocaleBatchSize) {
+    console.error(
+      `[MCP]   Image Locale Batch Size: ${options.imageLocaleBatchSize}`
+    );
   }
   console.error(`[MCP]   Mode: ${dryRun ? "Dry run" : "Actual push"}`);
 
@@ -202,6 +208,7 @@ export async function handleAsoPush(options: AsoPushOptions) {
         uploadImages,
         locales,
         imageUploadTimeoutMs,
+        imageLocaleBatchSize: options.imageLocaleBatchSize,
         slug,
       });
       results.push(formatPushResult("Google Play", result));

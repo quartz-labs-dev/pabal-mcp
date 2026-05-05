@@ -36,7 +36,9 @@ interface GooglePlayAppInfo {
   supportedLocales?: string[];
 }
 
-const GOOGLE_PLAY_SCREENSHOT_LOCALE_BATCH_SIZE = 5;
+type GooglePlayScreenshotUploadOption = Parameters<
+  GooglePlayClient["uploadScreenshotsForLocales"]
+>[0][number];
 
 export function resolveGooglePlayLocales(
   allLocales: string[],
@@ -63,6 +65,20 @@ export function shouldPushGooglePlayAppDetails({
   requestedLocales?: string[];
 }): boolean {
   return hasContactDetails && !requestedLocales?.length;
+}
+
+export function createGooglePlayScreenshotUploadBatches(
+  options: GooglePlayScreenshotUploadOption[],
+  batchSize?: number
+): GooglePlayScreenshotUploadOption[][] {
+  if (!batchSize) return options.length > 0 ? [options] : [];
+
+  const batches: GooglePlayScreenshotUploadOption[][] = [];
+  for (let offset = 0; offset < options.length; offset += batchSize) {
+    batches.push(options.slice(offset, offset + batchSize));
+  }
+
+  return batches;
 }
 
 /**
@@ -289,6 +305,7 @@ export class GooglePlayService {
     uploadImages = false,
     locales,
     imageUploadTimeoutMs,
+    imageLocaleBatchSize,
     slug,
   }: {
     config: EnvConfig;
@@ -298,6 +315,7 @@ export class GooglePlayService {
     uploadImages?: boolean;
     locales?: string[];
     imageUploadTimeoutMs?: number;
+    imageLocaleBatchSize?: number;
     slug?: string;
   }): Promise<PushAsoResult> {
     const skip = checkPushPrerequisites({
@@ -387,9 +405,7 @@ export class GooglePlayService {
         const uploadedLocales: string[] = [];
         const skippedLocales: string[] = [];
         const failedLocales: string[] = [];
-        const screenshotUploadOptions: Parameters<
-          GooglePlayClient["uploadScreenshotsForLocales"]
-        >[0] = [];
+        const screenshotUploadOptions: GooglePlayScreenshotUploadOption[] = [];
 
         for (const locale of localesToPush) {
           try {
@@ -504,16 +520,11 @@ export class GooglePlayService {
           }
         }
 
-        for (
-          let offset = 0;
-          offset < screenshotUploadOptions.length;
-          offset += GOOGLE_PLAY_SCREENSHOT_LOCALE_BATCH_SIZE
-        ) {
-          const batch = screenshotUploadOptions.slice(
-            offset,
-            offset + GOOGLE_PLAY_SCREENSHOT_LOCALE_BATCH_SIZE
-          );
-
+        const screenshotBatches = createGooglePlayScreenshotUploadBatches(
+          screenshotUploadOptions,
+          imageLocaleBatchSize
+        );
+        for (const batch of screenshotBatches) {
           try {
             console.error(
               `[GooglePlay]   📤 Uploading screenshots for ${batch.length} locale(s) in one edit...`

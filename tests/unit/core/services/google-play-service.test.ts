@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  createGooglePlayScreenshotUploadBatches,
   resolveGooglePlayLocales,
   shouldPushGooglePlayAppDetails,
 } from "@/core/services/google-play-service";
@@ -65,6 +66,42 @@ describe("google-play-service", () => {
       });
 
       assert.equal(result, false);
+    });
+  });
+
+  describe("createGooglePlayScreenshotUploadBatches", () => {
+    const options = [
+      { language: "en-US" },
+      { language: "ko-KR" },
+      { language: "ja-JP" },
+      { language: "fr-FR" },
+    ];
+
+    it("should use one edit batch by default", () => {
+      const result = createGooglePlayScreenshotUploadBatches(options);
+
+      assert.deepEqual(
+        result.map((batch) => batch.map((option) => option.language)),
+        [["en-US", "ko-KR", "ja-JP", "fr-FR"]]
+      );
+    });
+
+    it("should split batches when batch size is provided", () => {
+      const result = createGooglePlayScreenshotUploadBatches(options, 2);
+
+      assert.deepEqual(
+        result.map((batch) => batch.map((option) => option.language)),
+        [
+          ["en-US", "ko-KR"],
+          ["ja-JP", "fr-FR"],
+        ]
+      );
+    });
+
+    it("should return no batches when there are no upload options", () => {
+      const result = createGooglePlayScreenshotUploadBatches([]);
+
+      assert.deepEqual(result, []);
     });
   });
 });
