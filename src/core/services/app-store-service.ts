@@ -39,6 +39,46 @@ interface AppStoreAppInfo {
   supportedLocales?: string[];
 }
 
+interface ReleaseNoteUpdateResult {
+  locale: string;
+  error?: string;
+}
+
+const APP_STORE_RELEASE_NOTES_UPDATE_CONCURRENCY = 5;
+
+const updateReleaseNotesWithConcurrency = async (options: {
+  locales: string[];
+  concurrency: number;
+  update: (locale: string) => Promise<void>;
+}): Promise<ReleaseNoteUpdateResult[]> => {
+  const { locales, concurrency, update } = options;
+  const results: ReleaseNoteUpdateResult[] = new Array(locales.length);
+  let nextIndex = 0;
+
+  const workerCount = Math.min(concurrency, locales.length);
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < locales.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        const locale = locales[currentIndex];
+
+        try {
+          await update(locale);
+          results[currentIndex] = { locale };
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          results[currentIndex] = { locale, error: message };
+        }
+      }
+    })
+  );
+
+  return results;
+};
+
 export function resolveAppStoreLocales(
   allLocales: string[],
   requestedLocales?: string[]
@@ -200,22 +240,23 @@ export class AppStoreService {
           )
         : Object.keys(releaseNotes);
 
-      const updated: string[] = [];
-      const failed: Array<{ locale: string; error: string }> = [];
-
-      for (const locale of localesToUpdate) {
-        try {
-          await client.updateWhatsNew({
+      const updateResults = await updateReleaseNotesWithConcurrency({
+        locales: localesToUpdate,
+        concurrency: APP_STORE_RELEASE_NOTES_UPDATE_CONCURRENCY,
+        update: (locale) =>
+          client.updateWhatsNew({
             versionId: targetVersionId!,
             locale,
             whatsNew: releaseNotes[locale],
-          });
-          updated.push(locale);
-        } catch (error) {
-          const msg = error instanceof Error ? error.message : String(error);
-          failed.push({ locale, error: msg });
-        }
-      }
+          }),
+      });
+
+      const updated = updateResults
+        .filter((result) => !result.error)
+        .map((result) => result.locale);
+      const failed = updateResults.flatMap((result) =>
+        result.error ? [{ locale: result.locale, error: result.error }] : []
+      );
 
       const success = failed.length === 0;
       const partialError = !success
