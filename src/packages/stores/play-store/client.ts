@@ -774,11 +774,17 @@ export class GooglePlayClient {
   }
 
   private async commitEdit(session: EditSession): Promise<{ data: AppEdit }> {
-    const response = await this.androidPublisher.edits.commit({
-      auth: session.auth,
-      packageName: session.packageName,
-      editId: session.editId,
-    });
+    const response = await this.androidPublisher.edits.commit(
+      {
+        auth: session.auth,
+        packageName: session.packageName,
+        editId: session.editId,
+      },
+      // Google Play deletes an edit after a successful commit. Retrying this
+      // non-idempotent request can surface a false "This Edit has been deleted"
+      // failure when the first attempt actually committed.
+      { retry: false }
+    );
     return { data: response.data };
   }
 
