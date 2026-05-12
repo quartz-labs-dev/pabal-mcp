@@ -300,7 +300,7 @@ registerToolWithInfo(
         .positive()
         .optional()
         .describe(
-          "Google Play image locale batch size. Omit to upload all target locales in one edit commit"
+          "Google Play image locale batch size (default: 1 when uploadImages=true, replacing screenshots per locale while preserving videos)"
         ),
       dryRun: z
         .boolean()

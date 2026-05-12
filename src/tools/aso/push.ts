@@ -15,6 +15,7 @@ import { GooglePlayService } from "@/core/services/google-play-service";
 import { formatPushResult } from "@/core/helpers/formatters";
 
 const DEFAULT_IMAGE_UPLOAD_TIMEOUT_MS = 10 * 60 * 1000;
+const DEFAULT_IMAGE_LOCALE_BATCH_SIZE = 1;
 
 const appResolutionService = new AppResolutionService();
 const appStoreService = new AppStoreService();
@@ -42,6 +43,9 @@ export async function handleAsoPush(options: AsoPushOptions) {
   const imageUploadTimeoutMs =
     options.imageUploadTimeoutMs ??
     (uploadImages ? DEFAULT_IMAGE_UPLOAD_TIMEOUT_MS : undefined);
+  const imageLocaleBatchSize =
+    options.imageLocaleBatchSize ??
+    (uploadImages ? DEFAULT_IMAGE_LOCALE_BATCH_SIZE : undefined);
 
   const resolved = appResolutionService.resolve({
     slug: options.app,
@@ -69,14 +73,17 @@ export async function handleAsoPush(options: AsoPushOptions) {
   if (packageName) console.error(`[MCP]   Package Name: ${packageName}`);
   if (bundleId) console.error(`[MCP]   Bundle ID: ${bundleId}`);
   console.error(`[MCP]   Upload Images: ${uploadImages ? "Yes" : "No"}`);
+  if (uploadImages) {
+    console.error(
+      `[MCP]   Image Upload Mode: overwrite screenshots only (videos preserved)`
+    );
+  }
   if (locales?.length) console.error(`[MCP]   Locales: ${locales.join(", ")}`);
   if (imageUploadTimeoutMs) {
     console.error(`[MCP]   Image Upload Timeout: ${imageUploadTimeoutMs}ms`);
   }
-  if (options.imageLocaleBatchSize) {
-    console.error(
-      `[MCP]   Image Locale Batch Size: ${options.imageLocaleBatchSize}`
-    );
+  if (imageLocaleBatchSize) {
+    console.error(`[MCP]   Image Locale Batch Size: ${imageLocaleBatchSize}`);
   }
   console.error(`[MCP]   Mode: ${dryRun ? "Dry run" : "Actual push"}`);
 
@@ -187,7 +194,11 @@ export async function handleAsoPush(options: AsoPushOptions) {
             configData,
             null,
             2
-          )}`,
+          )}${
+            uploadImages
+              ? "\n\nImage upload mode: overwrite screenshots only; videos/app previews are preserved."
+              : ""
+          }`,
         },
       ],
     };
@@ -208,7 +219,7 @@ export async function handleAsoPush(options: AsoPushOptions) {
         uploadImages,
         locales,
         imageUploadTimeoutMs,
-        imageLocaleBatchSize: options.imageLocaleBatchSize,
+        imageLocaleBatchSize,
         slug,
       });
       results.push(formatPushResult("Google Play", result));
