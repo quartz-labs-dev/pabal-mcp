@@ -199,7 +199,7 @@ EOF
 4. 스토어 데이터 가져오기
 
    `apps-init`을 사용해 스토어 API에서 앱을 가져와 자동 등록합니다.
-   이 명령은 `~/.config/pabal-mcp/registered-apps.json`에 스토어에서 사용 가능한 앱들을 저장합니다.
+   이 명령은 `~/.config/pabal-mcp/registered-apps.json`에 스토어에서 사용 가능한 앱들을 저장합니다. 자세한 형식은 [앱 관리 도구](./apps.md)를 참고하세요.
 
 5. 파일 권한 잠그기 (폴더 내 모든 파일):
 

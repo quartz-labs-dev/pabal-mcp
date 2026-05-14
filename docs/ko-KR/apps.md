@@ -2,6 +2,35 @@
 
 App Store Connect와 Google Play Console에서 앱을 등록하고 관리하는 도구입니다.
 
+**registered-apps.json**은 등록된 앱 메타데이터를 `~/.config/pabal-mcp/registered-apps.json`에 저장하는 파일입니다.
+`apps-init`, `apps-add`, `apps-search`가 함께 사용하며, 보통 직접 작성하지 않고 도구가 생성/업데이트합니다.
+
+형식:
+
+```jsonc
+{
+  "apps": [
+    {
+      "slug": "myapp", // 도구에서 쓰는 로컬 ID
+      "name": "My App", // 표시 이름
+      "appStore": {
+        "bundleId": "com.example.myapp", // App Store 번들 ID
+        "appId": "123456789", // App Store Connect 앱 ID
+        "name": "My App",
+        "supportedLocales": ["en-US", "ko", "ja"], // 선택 값, 스토어 지원 언어
+      },
+      "googlePlay": {
+        "packageName": "com.example.myapp", // Google Play 패키지명
+        "name": "My App",
+        "supportedLocales": ["en-US", "ko", "ja"], // 선택 값, 스토어 지원 언어
+      },
+    },
+  ],
+}
+```
+
+앱 하나에는 `appStore`, `googlePlay`, 또는 둘 다 포함할 수 있습니다. 도구는 `slug`, App Store `bundleId`, Google Play `packageName` 중 하나로 앱을 찾을 수 있습니다.
+
 ## apps-init
 
 스토어 API에서 앱을 가져와 자동 등록합니다.
@@ -166,32 +195,6 @@ You can now reference this app in other tools using the `app: "myapp"` parameter
 ```
 
 ---
-
-## 등록된 앱 저장소
-
-앱은 `~/.config/pabal-mcp/registered-apps.json`에 저장됩니다:
-
-```json
-{
-  "apps": [
-    {
-      "slug": "myapp",
-      "name": "My App",
-      "appStore": {
-        "bundleId": "com.example.myapp",
-        "appId": "123456789",
-        "name": "My App",
-        "supportedLocales": ["en-US", "ko", "ja"]
-      },
-      "googlePlay": {
-        "packageName": "com.example.myapp",
-        "name": "My App",
-        "supportedLocales": ["en-US", "ko", "ja"]
-      }
-    }
-  ]
-}
-```
 
 ## 참고
 

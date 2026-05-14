@@ -38,6 +38,14 @@ chmod 700 ~/.config/pabal-mcp
 
 <br>
 
+### Registered Apps
+
+Registered apps are stored locally in `~/.config/pabal-mcp/registered-apps.json`.
+It is usually created and updated by `apps-init` or `apps-add`, then used by tools such as `apps-search`, `aso-pull`, and release-note workflows.
+See the app management docs for the detailed format: [English](docs/en-US/apps.md) / [한국어](docs/ko-KR/apps.md).
+
+<br>
+
 ## Features
 
 - ✅ **ASO Data Sync**: Pull/push metadata from App Store and Google Play

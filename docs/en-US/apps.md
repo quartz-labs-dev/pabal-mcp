@@ -2,6 +2,35 @@
 
 Tools for registering and managing apps from App Store Connect and Google Play Console.
 
+**registered-apps.json** stores registered app metadata at `~/.config/pabal-mcp/registered-apps.json`.
+It is shared by `apps-init`, `apps-add`, and `apps-search`, and is usually created or updated by the tools instead of being written by hand.
+
+Format:
+
+```jsonc
+{
+  "apps": [
+    {
+      "slug": "myapp", // Local ID used by tools
+      "name": "My App", // Display name
+      "appStore": {
+        "bundleId": "com.example.myapp", // App Store bundle ID
+        "appId": "123456789", // App Store Connect app ID
+        "name": "My App",
+        "supportedLocales": ["en-US", "ko", "ja"], // Optional, store locales
+      },
+      "googlePlay": {
+        "packageName": "com.example.myapp", // Google Play package name
+        "name": "My App",
+        "supportedLocales": ["en-US", "ko", "ja"], // Optional, store locales
+      },
+    },
+  ],
+}
+```
+
+Each app can include `appStore`, `googlePlay`, or both. Tools can resolve an app by `slug`, App Store `bundleId`, or Google Play `packageName`.
+
 ## apps-init
 
 Fetch apps from the store API and auto-register them.
@@ -166,32 +195,6 @@ Search registered apps.
 ```
 
 ---
-
-## Registered Apps Storage
-
-Apps are stored in `~/.config/pabal-mcp/registered-apps.json`:
-
-```json
-{
-  "apps": [
-    {
-      "slug": "myapp",
-      "name": "My App",
-      "appStore": {
-        "bundleId": "com.example.myapp",
-        "appId": "123456789",
-        "name": "My App",
-        "supportedLocales": ["en-US", "ko", "ja"]
-      },
-      "googlePlay": {
-        "packageName": "com.example.myapp",
-        "name": "My App",
-        "supportedLocales": ["en-US", "ko", "ja"]
-      }
-    }
-  ]
-}
-```
 
 ## See Also
 

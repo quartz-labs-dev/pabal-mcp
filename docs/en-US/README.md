@@ -210,7 +210,7 @@ Replace the `issuerId` and `keyId` placeholders in the next step after you grab 
 4. Pull store data
 
    Use `apps-init` to fetch and auto-register existing apps from the store APIs.
-   This will populate your `~/.config/pabal-mcp/registered-apps.json` with the apps available in your stores.
+   This will populate your `~/.config/pabal-mcp/registered-apps.json` with the apps available in your stores. See [App Management Tools](./apps.md) for the detailed format.
 
 5. Lock file permissions (all files in the config folder):
 
