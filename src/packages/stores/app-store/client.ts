@@ -1196,6 +1196,15 @@ export class AppStoreClient {
     const existingScreenshots = (screenshotsResponse.data || []).filter(
       (screenshot) => screenshot.type === "appScreenshots"
     );
+    const incompleteScreenshots = existingScreenshots.filter((screenshot) => {
+      const deliveryState = screenshot.attributes?.assetDeliveryState as
+        | { state?: string }
+        | undefined;
+      return deliveryState?.state && deliveryState.state !== "COMPLETE";
+    });
+    const completeScreenshots = existingScreenshots.filter(
+      (screenshot) => !incompleteScreenshots.includes(screenshot)
+    );
     const nonScreenshotCount =
       (screenshotsResponse.data || []).length - existingScreenshots.length;
 
@@ -1205,9 +1214,18 @@ export class AppStoreClient {
       );
     }
 
+    const deletedIncomplete = await this.deleteScreenshots(
+      incompleteScreenshots
+    );
+    if (deletedIncomplete > 0) {
+      console.error(
+        `[AppStore]       Deleted ${deletedIncomplete} incomplete screenshot upload(s)`
+      );
+    }
+
     const slotsToFree = Math.max(
       0,
-      existingScreenshots.length +
+      completeScreenshots.length +
         incomingCount -
         APP_STORE_SCREENSHOT_SET_MAX_COUNT
     );
@@ -1215,15 +1233,15 @@ export class AppStoreClient {
     // after freeing slots, users are more likely to still see the primary
     // screenshots rather than the tail of the old set.
     const screenshotsToDeleteBeforeUpload =
-      slotsToFree > 0 ? existingScreenshots.slice(-slotsToFree) : [];
-    const screenshotsToDeleteAfterUpload = existingScreenshots.slice(
+      slotsToFree > 0 ? completeScreenshots.slice(-slotsToFree) : [];
+    const screenshotsToDeleteAfterUpload = completeScreenshots.slice(
       0,
-      existingScreenshots.length - slotsToFree
+      completeScreenshots.length - slotsToFree
     );
 
-    const deletedBeforeUpload = await this.deleteScreenshots(
-      screenshotsToDeleteBeforeUpload
-    );
+    const deletedBeforeUpload =
+      deletedIncomplete +
+      (await this.deleteScreenshots(screenshotsToDeleteBeforeUpload));
 
     if (deletedBeforeUpload > 0) {
       console.error(

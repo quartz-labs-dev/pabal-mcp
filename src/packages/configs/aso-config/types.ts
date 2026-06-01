@@ -68,6 +68,7 @@ export interface AppStoreScreenshots {
   iphone55?: string[];
   iphone47?: string[];
   iphone40?: string[];
+  ipad13?: string[];
   ipadPro129?: string[];
   ipadPro11?: string[];
   ipad105?: string[];

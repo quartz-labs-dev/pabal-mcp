@@ -16,6 +16,7 @@ export const APP_STORE_DEVICE_TYPES = {
   iphone55: "APP_IPHONE_55",
   iphone47: "APP_IPHONE_47",
   iphone40: "APP_IPHONE_40",
+  ipad13: "APP_IPAD_PRO_3GEN_129",
   ipadPro129: "APP_IPAD_PRO_3GEN_129",
   ipadPro11: "APP_IPAD_PRO_11",
   ipad105: "APP_IPAD_105",

@@ -40,7 +40,7 @@ App Store/Google Play에서 ASO 데이터를 가져와 로컬 캐시에 저장�
 
 - 앱 이름, 부제목, 설명
 - 키워드, 프로모션 텍스트
-- 스크린샷 (iPhone 6.5", iPhone 6.1", iPad Pro 12.9")
+- 스크린샷 (iPhone 6.5", iPhone 6.1", iPad 13")
 - 모든 지원 언어
 
 **Google Play:**
@@ -158,7 +158,7 @@ push 디렉토리에서 데이터를 읽습니다:
       "screenshots": {
         "iphone65": ["url1", "url2"],
         "iphone61": ["url1", "url2"],
-        "ipadPro129": ["url1"]
+        "ipad13": ["url1"]
       }
     },
     "ko": {

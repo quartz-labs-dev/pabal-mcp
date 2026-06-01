@@ -439,6 +439,8 @@ export class AppStoreService {
               localeData?.screenshots &&
               ((localeData.screenshots.iphone65 &&
                 localeData.screenshots.iphone65.length > 0) ||
+                (localeData.screenshots.ipad13 &&
+                  localeData.screenshots.ipad13.length > 0) ||
                 (localeData.screenshots.ipadPro129 &&
                   localeData.screenshots.ipadPro129.length > 0));
 
@@ -466,15 +468,14 @@ export class AppStoreService {
                 }
               }
 
-              // Map ipadPro129 screenshots
-              if (
-                relativePaths.ipadPro129 &&
-                relativePaths.ipadPro129.length > 0
-              ) {
-                for (const relPath of relativePaths.ipadPro129) {
+              // Map 13" iPad screenshots. ipadPro129 is kept as a legacy alias.
+              const ipad13Paths =
+                relativePaths.ipad13 ?? relativePaths.ipadPro129 ?? [];
+              if (ipad13Paths.length > 0) {
+                for (const relPath of ipad13Paths) {
                   screenshotsToUpload.push({
                     path: `${screenshotsBaseDir}/${relPath}`,
-                    displayType: APP_STORE_DEVICE_TYPES.ipadPro129,
+                    displayType: APP_STORE_DEVICE_TYPES.ipad13,
                     filename: relPath.split("/").pop() || relPath,
                   });
                 }

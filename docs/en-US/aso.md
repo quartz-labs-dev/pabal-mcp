@@ -40,7 +40,7 @@ Fetch ASO data from App Store/Google Play and save to local cache.
 
 - App name, subtitle, description
 - Keywords, promotional text
-- Screenshots (iPhone 6.5", iPhone 6.1", iPad Pro 12.9")
+- Screenshots (iPhone 6.5", iPhone 6.1", iPad 13")
 - All supported locales
 
 **Google Play:**
@@ -158,7 +158,7 @@ Data is read from the push directory:
       "screenshots": {
         "iphone65": ["url1", "url2"],
         "iphone61": ["url1", "url2"],
-        "ipadPro129": ["url1"]
+        "ipad13": ["url1"]
       }
     },
     "ko": {
